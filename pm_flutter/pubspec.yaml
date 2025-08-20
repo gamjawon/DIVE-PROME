@@ -30,6 +30,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  kakao_flutter_sdk: ^1.9.6
+  url_launcher: ^6.1.12
+  # 위치 관련 패키지 (필요시)
+  geolocator: ^9.0.2
+  permission_handler: ^10.4.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

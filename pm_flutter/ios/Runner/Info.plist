@@ -45,5 +45,27 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 카카오 앱 키 설정 -->
+    <key>KAKAO_APP_KEY</key>
+    <string>YOUR_ACTUAL_NATIVE_APP_KEY</string>
+    
+    <!-- URL Scheme 설정 -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>kakaokompassauth</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>kakao$(KAKAO_APP_KEY)</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- 카카오내비 앱 쿼리 허용 -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>kakaokompass</string>
+    </array>
 </dict>
 </plist>
