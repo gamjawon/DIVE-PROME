@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/models/place_model.dart';
 import 'package:frontend/models/selected_place.dart';
+import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/presentation/screens/place_search_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
@@ -432,10 +433,19 @@ class _RouteFormState extends State<RouteForm> {
                 borderRadius: BorderRadius.circular(8),
                 onTap: _isButtonEnabled
                     ? () {
-                        // 길찾기 API 연결 예정
                         if (_startPlace != null && _endPlace != null) {
-                          print(
-                            '길찾기: ${_startPlace!.name} (${_startPlace!.latitude}, ${_startPlace!.longitude}) -> ${_endPlace!.name} (${_endPlace!.latitude}, ${_endPlace!.longitude})',
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => NaviScreen(
+                                startLat: _startPlace!.latitude,
+                                startLng: _startPlace!.longitude,
+                                goalLat: _endPlace!.latitude,
+                                goalLng: _endPlace!.longitude,
+                                startName: _startPlace!.name,
+                                goalName: _endPlace!.name,
+                              ),
+                            ),
                           );
                         }
                       }
@@ -497,44 +507,52 @@ class BottomNavigationPanel extends StatelessWidget {
         spacing: 10,
         children: [
           SvgPicture.asset('assets/icons/home.svg', width: 30, height: 30),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-            decoration: ShapeDecoration(
-              color: const Color(0xFFFF5930),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(55),
-              ),
-              shadows: [
-                BoxShadow(
-                  color: Color(0x3FE63100),
-                  blurRadius: 14,
-                  offset: Offset(0, 0),
-                  spreadRadius: 2,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => NaviScreen()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+              decoration: ShapeDecoration(
+                color: const Color(0xFFFF5930),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(55),
                 ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 12,
-              children: [
-                SvgPicture.asset(
-                  'assets/icons/navi.svg',
-                  width: 30,
-                  height: 30,
-                ),
-                Text(
-                  '네비게이션',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    height: 1,
+                shadows: [
+                  BoxShadow(
+                    color: Color(0x3FE63100),
+                    blurRadius: 14,
+                    offset: Offset(0, 0),
+                    spreadRadius: 2,
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 12,
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/navi.svg',
+                    width: 30,
+                    height: 30,
+                  ),
+                  Text(
+                    '네비게이션',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      height: 1,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           SvgPicture.asset('assets/icons/mypage.svg', width: 30, height: 30),
