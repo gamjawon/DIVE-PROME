@@ -1,26 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/providers/location_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  KakaoMapController? _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    // 화면 초기 렌더 후 위치 가져오기
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final notifier = ref.read(locationNotifierProvider.notifier);
+      if (ref.read(locationNotifierProvider).value == null) {
+        notifier.refresh();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
+    final locationState = ref.watch(locationNotifierProvider);
+    // 위치 갱신되면 지도 이동
+    locationState.whenData((location) {
+      if (_mapController != null && location != null) {
+        _mapController!.moveCamera(
+          CameraUpdate.newCenterPosition(
+            LatLng(location.latitude, location.longitude),
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       body: Stack(
         children: [
           KakaoMap(
-            option: const KakaoMapOption(
-              position: LatLng(37.5665, 126.978),
+            option: KakaoMapOption(
+              position: const LatLng(37.5665, 126.978),
               zoomLevel: 16,
               mapType: MapType.normal,
             ),
-            onMapReady: (KakaoMapController controller) {},
+            onMapReady: (controller) {
+              _mapController = controller;
+            },
           ),
-
           Container(width: screenWidth, height: 100, color: Colors.white),
           Positioned(
             top: 0,
@@ -45,13 +79,15 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class TopStatusBar extends StatelessWidget {
+class TopStatusBar extends ConsumerWidget {
   const TopStatusBar({super.key, required this.screenWidth});
 
   final double screenWidth;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locationState = ref.watch(locationNotifierProvider);
+
     return Container(
       width: screenWidth,
       height: 100,
@@ -112,7 +148,12 @@ class TopStatusBar extends StatelessWidget {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    '부산, 서면',
+                    locationState.when(
+                      data: (location) =>
+                          location == null ? '위치 정보 없음' : location.address,
+                      error: (error, stackTrace) => 'Error: $error',
+                      loading: () => 'Loading...',
+                    ),
                     style: TextStyle(
                       color: Colors.black,
                       fontSize: 16,
