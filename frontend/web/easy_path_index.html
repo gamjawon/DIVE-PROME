@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    
+<head>
+    
+    <title>쉬운 길 경로 시각화</title>
+    <meta charset="utf-8">
+    <style>
+        html, body {width:100%;height:100%;margin:0;padding:0;}
+        #map {width:100%;height:100%;}
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script type="text/javascript" 
+        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=93c6895072514dd0107099d6773d4933&libraries=services">
+    </script>
+        
+    <script>
+    kakao.maps.load(function() {
+        const container = document.getElementById('map');
+        const map = new kakao.maps.Map(container, {
+        center: new kakao.maps.LatLng(35.1532, 129.1189),
+        level: 4
+        });
+        
+        // 1D vertexes [lon,lat,lon,lat,...] -> [[lon,lat], ...]
+        function vertexesToPoints(vertexes) {
+        const pts = [];
+        for (let i = 0; i + 1 < vertexes.length; i += 2) {
+            pts.push([Number(vertexes[i]), Number(vertexes[i + 1])]);
+        }
+        return pts;
+        }
+
+        // Kakao 원본 JSON -> pathPoints([[lon,lat],...]) 추출
+        function extractPathPointsFromKakao(kakaoJson) {
+        const routes = kakaoJson?.routes || [];
+        if (!routes.length) return [];
+        const route = routes[0]; // 첫 번째 경로 사용(원하면 우선순위에 맞춰 골라도 됨)
+
+        const pts = [];
+        for (const sec of route.sections || []) {
+            for (const rd of sec.roads || []) {
+            const vx = rd.vertexes || [];
+            const arr = vertexesToPoints(vx);
+            for (const p of arr) pts.push(p);
+            }
+        }
+        return pts;
+        }
+
+        async function getAndDrawPath() {
+        const origin = {x: 129.1189741804938, y: 35.15320412097078};
+        const destination = {x: 129.1597882905762, y: 35.15850277352314};
+        // 여기서 다른 우선순위도 자유롭게 교체 가능: "TIME", "DISTANCE", "RECOMMEND", "MAIN_ROAD", "NO_TRAFFIC_INFO", "EASY"
+        const priority = "EASY";
+
+        try {
+            const resp = await fetch('http://localhost:8000/find-path', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ origin, destination, priority })
+            });
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+
+            // ✅ EASY 형식이나, ✅ 카카오 원본이든 모두 지원
+            let pathPoints = [];
+            if (Array.isArray(data.path_points)) {
+            pathPoints = data.path_points;
+            } else {
+            pathPoints = extractPathPointsFromKakao(data);
+            }
+            if (!pathPoints.length) throw new Error('No path points');
+
+            const linePath = pathPoints.map(([lon, lat]) => new kakao.maps.LatLng(lat, lon));
+            const polyline = new kakao.maps.Polyline({
+            path: linePath,
+            strokeWeight: 5,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.7,
+            strokeStyle: 'solid'
+            });
+            polyline.setMap(map);
+
+            const bounds = new kakao.maps.LatLngBounds();
+            linePath.forEach(p => bounds.extend(p));
+            map.setBounds(bounds);
+
+        } catch (e) {
+            console.error(e);
+            alert('경로를 가져오는 데 실패했습니다.');
+        }
+        }
+
+        getAndDrawPath();
+    });
+    </script>
+</body>
+</html>
