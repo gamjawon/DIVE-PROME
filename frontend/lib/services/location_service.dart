@@ -1,5 +1,5 @@
 import 'package:frontend/models/location_model.dart';
-import 'package:geocoding/geocoding.dart';
+import 'package:frontend/services/kakao_local_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
@@ -64,17 +64,14 @@ class LocationService {
     double longitude,
   ) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
+      final kakaoLocalService = KakaoLocalService();
+      return await kakaoLocalService.getAddressFromCoordinates(
+        longitude: longitude,
+        latitude: latitude,
       );
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks.first;
-        return '${place.street}, ${place.locality}, ${place.administrativeArea}';
-      }
     } catch (e) {
-      print(e);
+      print('주소를 가져오는 중 오류 발생: $e');
+      return "주소 알 수 없음";
     }
-    return "주소 알 수 없음";
   }
 }

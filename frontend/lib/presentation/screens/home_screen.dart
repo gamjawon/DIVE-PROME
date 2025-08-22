@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/models/place_model.dart';
+import 'package:frontend/models/selected_place.dart';
+import 'package:frontend/presentation/screens/place_search_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
@@ -44,42 +47,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: Stack(
-          children: [
-            KakaoMap(
-              option: KakaoMapOption(
-                position: const LatLng(37.5665, 126.978),
-                zoomLevel: 16,
-                mapType: MapType.normal,
-              ),
-              onMapReady: (controller) {
-                _mapController = controller;
-              },
+      body: Stack(
+        children: [
+          KakaoMap(
+            option: KakaoMapOption(
+              position: const LatLng(37.5665, 126.978),
+              zoomLevel: 16,
+              mapType: MapType.normal,
             ),
-            Container(width: screenWidth, height: 100, color: Colors.white),
-            Positioned(
-              top: 0,
-              left: 0,
-              child: SafeArea(child: TopStatusBar(screenWidth: screenWidth)),
-            ),
-            Positioned(
-              top: 170,
-              left: 15,
-              right: 15,
-              child: RouteForm(screenWidth: screenWidth),
-            ),
-            Positioned(
-              bottom: 20,
-              left: 65,
-              right: 65,
-              child: SafeArea(child: BottomNavigationPanel()),
-            ),
-          ],
-        ),
+            onMapReady: (controller) {
+              _mapController = controller;
+            },
+          ),
+          Container(width: screenWidth, height: 100, color: Colors.white),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: SafeArea(child: TopStatusBar(screenWidth: screenWidth)),
+          ),
+          Positioned(
+            top: 170,
+            left: 15,
+            right: 15,
+            child: RouteForm(screenWidth: screenWidth),
+          ),
+          Positioned(
+            bottom: 20,
+            left: 65,
+            right: 65,
+            child: SafeArea(child: BottomNavigationPanel()),
+          ),
+        ],
       ),
     );
   }
@@ -191,6 +189,8 @@ class RouteForm extends StatefulWidget {
 class _RouteFormState extends State<RouteForm> {
   final TextEditingController _startController = TextEditingController();
   final TextEditingController _endController = TextEditingController();
+  SelectedPlace? _startPlace;
+  SelectedPlace? _endPlace;
   bool _isButtonEnabled = false;
 
   @override
@@ -210,16 +210,57 @@ class _RouteFormState extends State<RouteForm> {
 
   void _updateButtonState() {
     setState(() {
-      _isButtonEnabled =
-          _startController.text.trim().isNotEmpty &&
-          _endController.text.trim().isNotEmpty;
+      _isButtonEnabled = _startPlace != null && _endPlace != null;
     });
   }
 
   void _swapLocations() {
-    final temp = _startController.text;
-    _startController.text = _endController.text;
-    _endController.text = temp;
+    final tempPlace = _startPlace;
+    final tempText = _startController.text;
+
+    setState(() {
+      _startPlace = _endPlace;
+      _endPlace = tempPlace;
+      _startController.text = _endController.text;
+      _endController.text = tempText;
+    });
+    _updateButtonState();
+  }
+
+  Future<void> _selectStartPlace() async {
+    final result = await Navigator.push<Place>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            PlaceSearchScreen(title: '출발지 선택', hintText: '출발지를 검색하세요'),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _startPlace = SelectedPlace.fromPlace(result);
+        _startController.text = _startPlace!.name;
+      });
+      _updateButtonState();
+    }
+  }
+
+  Future<void> _selectEndPlace() async {
+    final result = await Navigator.push<Place>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            PlaceSearchScreen(title: '도착지 선택', hintText: '도착지를 검색하세요'),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _endPlace = SelectedPlace.fromPlace(result);
+        _endController.text = _endPlace!.name;
+      });
+      _updateButtonState();
+    }
   }
 
   @override
@@ -267,29 +308,34 @@ class _RouteFormState extends State<RouteForm> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: TextField(
-                  controller: _startController,
-                  decoration: InputDecoration(
-                    hintText: '출발지를 입력하세요',
-                    hintStyle: TextStyle(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
+                child: GestureDetector(
+                  onTap: _selectStartPlace,
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: _startController,
+                      decoration: InputDecoration(
+                        hintText: '출발지를 입력하세요',
+                        hintStyle: TextStyle(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 16,
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 21,
+                          vertical: 9,
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: const Color(0xFF374151),
+                        fontSize: 16,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
+                        height: 1.50,
+                        letterSpacing: 0.09,
+                      ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 21,
-                      vertical: 9,
-                    ),
-                  ),
-                  style: TextStyle(
-                    color: const Color(0xFF374151),
-                    fontSize: 16,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    height: 1.50,
-                    letterSpacing: 0.09,
                   ),
                 ),
               ),
@@ -319,29 +365,34 @@ class _RouteFormState extends State<RouteForm> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: TextField(
-                  controller: _endController,
-                  decoration: InputDecoration(
-                    hintText: '도착지를 입력하세요',
-                    hintStyle: TextStyle(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
+                child: GestureDetector(
+                  onTap: _selectEndPlace,
+                  child: AbsorbPointer(
+                    child: TextField(
+                      controller: _endController,
+                      decoration: InputDecoration(
+                        hintText: '도착지를 입력하세요',
+                        hintStyle: TextStyle(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 16,
+                          fontFamily: 'Pretendard',
+                          fontWeight: FontWeight.w500,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 21,
+                          vertical: 9,
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: const Color(0xFF374151),
+                        fontSize: 16,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
+                        height: 1.50,
+                        letterSpacing: 0.09,
+                      ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 21,
-                      vertical: 9,
-                    ),
-                  ),
-                  style: TextStyle(
-                    color: const Color(0xFF374151),
-                    fontSize: 16,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    height: 1.50,
-                    letterSpacing: 0.09,
                   ),
                 ),
               ),
@@ -382,9 +433,11 @@ class _RouteFormState extends State<RouteForm> {
                 onTap: _isButtonEnabled
                     ? () {
                         // 길찾기 API 연결 예정
-                        print(
-                          '길찾기: ${_startController.text} -> ${_endController.text}',
-                        );
+                        if (_startPlace != null && _endPlace != null) {
+                          print(
+                            '길찾기: ${_startPlace!.name} (${_startPlace!.latitude}, ${_startPlace!.longitude}) -> ${_endPlace!.name} (${_endPlace!.latitude}, ${_endPlace!.longitude})',
+                          );
+                        }
                       }
                     : null,
                 child: Center(
