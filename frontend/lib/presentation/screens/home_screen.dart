@@ -43,37 +43,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
 
     return Scaffold(
-      body: Stack(
-        children: [
-          KakaoMap(
-            option: KakaoMapOption(
-              position: const LatLng(37.5665, 126.978),
-              zoomLevel: 16,
-              mapType: MapType.normal,
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: Stack(
+          children: [
+            KakaoMap(
+              option: KakaoMapOption(
+                position: const LatLng(37.5665, 126.978),
+                zoomLevel: 16,
+                mapType: MapType.normal,
+              ),
+              onMapReady: (controller) {
+                _mapController = controller;
+              },
             ),
-            onMapReady: (controller) {
-              _mapController = controller;
-            },
-          ),
-          Container(width: screenWidth, height: 100, color: Colors.white),
-          Positioned(
-            top: 0,
-            left: 0,
-            child: SafeArea(child: TopStatusBar(screenWidth: screenWidth)),
-          ),
-          Positioned(
-            top: 170,
-            left: 15,
-            right: 15,
-            child: RouteForm(screenWidth: screenWidth),
-          ),
-          Positioned(
-            bottom: 20,
-            left: 65,
-            right: 65,
-            child: SafeArea(child: BottomNavigationPanel()),
-          ),
-        ],
+            Container(width: screenWidth, height: 100, color: Colors.white),
+            Positioned(
+              top: 0,
+              left: 0,
+              child: SafeArea(child: TopStatusBar(screenWidth: screenWidth)),
+            ),
+            Positioned(
+              top: 170,
+              left: 15,
+              right: 15,
+              child: RouteForm(screenWidth: screenWidth),
+            ),
+            Positioned(
+              bottom: 20,
+              left: 65,
+              right: 65,
+              child: SafeArea(child: BottomNavigationPanel()),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -173,10 +178,48 @@ class TopStatusBar extends ConsumerWidget {
   }
 }
 
-class RouteForm extends StatelessWidget {
+class RouteForm extends StatefulWidget {
   const RouteForm({super.key, required this.screenWidth});
 
   final double screenWidth;
+
+  @override
+  State<RouteForm> createState() => _RouteFormState();
+}
+
+class _RouteFormState extends State<RouteForm> {
+  final TextEditingController _startController = TextEditingController();
+  final TextEditingController _endController = TextEditingController();
+  bool _isButtonEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 텍스트 변경 감지
+    _startController.addListener(_updateButtonState);
+    _endController.addListener(_updateButtonState);
+  }
+
+  @override
+  void dispose() {
+    _startController.dispose();
+    _endController.dispose();
+    super.dispose();
+  }
+
+  void _updateButtonState() {
+    setState(() {
+      _isButtonEnabled =
+          _startController.text.trim().isNotEmpty &&
+          _endController.text.trim().isNotEmpty;
+    });
+  }
+
+  void _swapLocations() {
+    final temp = _startController.text;
+    _startController.text = _endController.text;
+    _endController.text = temp;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,12 +254,8 @@ class RouteForm extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: screenWidth - 100,
+                width: widget.screenWidth - 100,
                 height: 50,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 21,
-                  vertical: 9,
-                ),
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -227,39 +266,48 @@ class RouteForm extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 10,
-                  children: [
-                    Text(
-                      '부산역',
-                      style: TextStyle(
-                        color: const Color(0xFF374151),
-                        fontSize: 16,
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w500,
-                        height: 1.50,
-                        letterSpacing: 0.09,
-                      ),
+                child: TextField(
+                  controller: _startController,
+                  decoration: InputDecoration(
+                    hintText: '출발지를 입력하세요',
+                    hintStyle: TextStyle(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 21,
+                      vertical: 9,
+                    ),
+                  ),
+                  style: TextStyle(
+                    color: const Color(0xFF374151),
+                    fontSize: 16,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                    height: 1.50,
+                    letterSpacing: 0.09,
+                  ),
                 ),
               ),
-              SvgPicture.asset('assets/icons/swap.svg', width: 25, height: 25),
+              GestureDetector(
+                onTap: _swapLocations,
+                child: SvgPicture.asset(
+                  'assets/icons/swap.svg',
+                  width: 25,
+                  height: 25,
+                ),
+              ),
             ],
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: screenWidth - 100,
+                width: widget.screenWidth - 100,
                 height: 50,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 21,
-                  vertical: 9,
-                ),
                 decoration: ShapeDecoration(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
@@ -270,24 +318,30 @@ class RouteForm extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 10,
-                  children: [
-                    Text(
-                      '서면 교차로',
-                      style: TextStyle(
-                        color: const Color(0xFF374151),
-                        fontSize: 16,
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w500,
-                        height: 1.50,
-                        letterSpacing: 0.09,
-                      ),
+                child: TextField(
+                  controller: _endController,
+                  decoration: InputDecoration(
+                    hintText: '도착지를 입력하세요',
+                    hintStyle: TextStyle(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 21,
+                      vertical: 9,
+                    ),
+                  ),
+                  style: TextStyle(
+                    color: const Color(0xFF374151),
+                    fontSize: 16,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                    height: 1.50,
+                    letterSpacing: 0.09,
+                  ),
                 ),
               ),
               SizedBox(
@@ -305,32 +359,48 @@ class RouteForm extends StatelessWidget {
             width: double.infinity,
             height: 56,
             decoration: ShapeDecoration(
-              gradient: LinearGradient(
-                begin: Alignment(1.00, 0.50),
-                end: Alignment(0.00, 0.50),
-                colors: [const Color(0xFFFF5A31), const Color(0xFFFF792C)],
-              ),
+              gradient: _isButtonEnabled
+                  ? LinearGradient(
+                      begin: Alignment(1.00, 0.50),
+                      end: Alignment(0.00, 0.50),
+                      colors: [
+                        const Color(0xFFFF5A31),
+                        const Color(0xFFFF792C),
+                      ],
+                    )
+                  : null,
+              color: _isButtonEnabled ? null : const Color(0xFFE5E7EB),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 10,
-              children: [
-                Text(
-                  '길찾기',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w700,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: _isButtonEnabled
+                    ? () {
+                        // 길찾기 API 연결 예정
+                        print(
+                          '길찾기: ${_startController.text} -> ${_endController.text}',
+                        );
+                      }
+                    : null,
+                child: Center(
+                  child: Text(
+                    '길찾기',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _isButtonEnabled
+                          ? Colors.white
+                          : const Color(0xFF9CA3AF),
+                      fontSize: 18,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ],
