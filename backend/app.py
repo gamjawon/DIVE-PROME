@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from enum import Enum
 import uvicorn
+from dataclasses import dataclass
+from typing import Optional
 from contextlib import asynccontextmanager
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +18,9 @@ from enum import Enum  # 이미 import 되어 있으면 생략
 # === 성능 패치: KD-Tree & 캐시 ===
 from scipy.spatial import cKDTree
 from functools import lru_cache
+
+from dataclasses import dataclass
+import statistics
 
 # --- 로거 설정 ---
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -55,6 +60,358 @@ node_id_array: Optional[np.ndarray] = None
 node_xy_array: Optional[np.ndarray] = None
 
 # ===================== 유틸/헬퍼 =====================
+@dataclass
+class SamplingParams:
+    max_points: int = 30
+    epsilon_base: float = 25.0
+    alpha: float = 1.2
+    beta: float = 0.7
+    theta_turn: float = 25.0
+    theta_uturn: float = 135.0
+    d_min: float = 80.0
+    d_max: float = 800.0
+    # --- 호환용 별칭(선택) ---
+    epsilon_base_m: Optional[float] = None
+    d_min_m: Optional[float] = None
+    d_max_m: Optional[float] = None
+
+    def __post_init__(self):
+        if self.epsilon_base_m is not None:
+            self.epsilon_base = float(self.epsilon_base_m)
+        if self.d_min_m is not None:
+            self.d_min = float(self.d_min_m)
+        if self.d_max_m is not None:
+            self.d_max = float(self.d_max_m)
+
+
+@dataclass
+class SamplingWeights:
+    w_turn: float = 0.35
+    w_uturn: float = 0.25
+    w_lane: float = 0.20
+    w_intersection: float = 0.10
+    w_class: float = 0.05
+    w_hazard: float = 0.05
+
+def _angle_deg(a, b, c):
+    # a,b,c: [lon,lat]
+    # 벡터 BA, BC 사이 각도 (deg, 0~180)
+    import math
+    bax = a[0] - b[0]; bay = a[1] - b[1]
+    bcx = c[0] - b[0]; bcy = c[1] - b[1]
+    na = math.hypot(bax, bay); nb = math.hypot(bcx, bcy)
+    if na == 0 or nb == 0: return 0.0
+    cosv = max(-1.0, min(1.0, (bax*bcx + bay*bcy) / (na*nb)))
+    return math.degrees(math.acos(cosv))
+
+def _segment_len_m(p, q):
+    # p,q: [lon,lat] -> meters
+    return haversine_m(p[1], p[0], q[1], q[0])
+
+def _perp_dist_m(p, a, b):
+    # P에서 AB 세그먼트까지 수선거리(m)
+    # 거리/투영 계산은 구면 정밀도까지 필요치 않으므로 근사(Equirectangular)로 충분.
+    ax, ay = a[0], a[1]; bx, by = b[0], b[1]; px, py = p[0], p[1]
+    if ax == bx and ay == by:
+        return _segment_len_m(p, a)
+    # 투영 t
+    vx, vy = bx - ax, by - ay
+    wx, wy = px - ax, py - ay
+    vv = vx*vx + vy*vy
+    t = max(0.0, min(1.0, (wx*vx + wy*vy) / vv))
+    proj = [ax + t*vx, ay + t*vy]
+    return _segment_len_m(p, proj)
+
+def _extract_features(points, theta_turn=25.0, theta_uturn=135.0):
+    n = len(points)
+    turns = [0.0]*n
+    is_uturn = [0]*n
+    # 간단한 교차로/분기 후보: 회전각이 크거나, 곡률이 급변하는 지점
+    is_intersection = [0]*n
+    # 차선변경 후보(메타 없을 때): 회전각 중간(15~60) + 연속 두 세그 구간 길이 짧음
+    lane_change = [0]*n
+    class_change = [0]*n
+    hazard = [0.0]*n
+
+    # 길이정보
+    seg_len = [0.0]*(n-1)
+    for i in range(n-1):
+        seg_len[i] = _segment_len_m(points[i], points[i+1])
+
+    for i in range(1, n-1):
+        ang = _angle_deg(points[i-1], points[i], points[i+1])
+        turns[i] = ang
+        if ang >= theta_uturn: is_uturn[i] = 1
+        if ang >= theta_turn: is_intersection[i] = 1
+
+        # 간이 lane-change 후보: 중간 회전각 + 짧은 연속 세그
+        if 15 <= ang <= 60:
+            left = seg_len[i-1] if i-1 < len(seg_len) else 0
+            right = seg_len[i] if i < len(seg_len) else 0
+            if left < 80 or right < 80:
+                lane_change[i] = 1
+
+    return {
+        "turns": turns,
+        "is_uturn": is_uturn,
+        "is_intersection": is_intersection,
+        "lane_change": lane_change,
+        "class_change": class_change,
+        "hazard": hazard,
+        "seg_len": seg_len,
+    }
+
+def _score_importance(feat, weights: SamplingWeights, theta_turn_clip=90.0):
+    import math
+    turns = feat["turns"]
+    n = len(turns)
+    imp = [0.0]*n
+    for i in range(n):
+        f_turn = min(1.0, abs(turns[i]) / theta_turn_clip)
+        imp[i] = (
+            weights.w_turn * f_turn +
+            weights.w_uturn * feat["is_uturn"][i] +
+            weights.w_lane * feat["lane_change"][i] +
+            weights.w_intersection * feat["is_intersection"][i] +
+            weights.w_class * feat["class_change"][i] +
+            weights.w_hazard * feat["hazard"][i]
+        )
+    return imp
+
+def _required_indices(n, feat, imp, tau=0.6):
+    req = set()
+    if n > 0: req.add(0)
+    if n > 1: req.add(n-1)
+    for i in range(n):
+        if feat["is_uturn"][i] or feat["is_intersection"][i] or feat["lane_change"][i] or imp[i] >= tau:
+            req.add(i)
+    return req
+
+def _weighted_rdp(points, imp, params: SamplingParams, keep:set):
+    # RDP with per-point epsilon: eps_i = eps_base / (1 + alpha*imp[i])
+    n = len(points)
+    if n <= 2:
+        return list(range(n)), []  # kept, removed
+
+    kept = set(keep)  # 필수 보존
+    removed = set()
+
+    def rdp(l, r):
+        # [l, r] 구간
+        a = points[l]; b = points[r]
+        max_d = -1.0; idx = -1
+        for i in range(l+1, r):
+            eps_i = params.epsilon_base / (1.0 + params.alpha*imp[i])
+            d = _perp_dist_m(points[i], a, b) - eps_i
+            if d > max_d:
+                max_d = d; idx = i
+        if max_d > 0:  # 허용오차 초과 → 분기
+            rdp(l, idx)
+            rdp(idx, r)
+        else:
+            # 구간 내 비필수점 제거
+            for i in range(l+1, r):
+                if i not in keep:
+                    removed.add(i)
+            kept.add(l); kept.add(r)
+
+    rdp(0, n-1)
+    kept_idx = sorted(list(kept))
+    removed_idx = sorted(list(removed - kept))
+    return kept_idx, removed_idx
+
+def _adaptive_pacing(points, kept_idx, imp, params: SamplingParams):
+    # 남는 슬롯을 구간별 중요도/거리 기반으로 분배
+    n = len(points)
+    if n == 0: return []
+    kept_idx = sorted(set(kept_idx))
+    if kept_idx[0] != 0: kept_idx = [0] + kept_idx
+    if kept_idx[-1] != n-1: kept_idx = kept_idx + [n-1]
+
+    # 현재 보유 수
+    cur = len(kept_idx)
+    if cur >= params.max_points:
+        return kept_idx[:params.max_points]
+
+    # 구간 통계
+    segs = []
+    for a, b in zip(kept_idx[:-1], kept_idx[1:]):
+        # 거리
+        d = 0.0
+        for i in range(a, b):
+            d += _segment_len_m(points[i], points[i+1])
+        # 중요도 합
+        g = sum(imp[a:b+1])
+        segs.append({"a":a, "b":b, "D":d, "G":g})
+
+    # 정규화 가중
+    sumD = sum(s["D"] for s in segs) or 1.0
+    sumG = sum(s["G"] for s in segs) or 1.0
+    for s in segs:
+        pD = s["D"]/sumD
+        pG = s["G"]/sumG
+        s["P"] = params.beta*pG + (1-params.beta)*pD
+
+    L = params.max_points - cur
+    # 각 구간별 추가 개수
+    alloc = [max(0, round(L * s["P"])) for s in segs]
+    for i, s in enumerate(segs):
+        # 이 구간 길이로 넣을 수 있는 이론적 최대(최소간격 d_min_m 기준)
+        max_for_seg = max(0, int(s["D"] // (params.d_min_m * 1.1)))
+        if alloc[i] > max_for_seg:
+            alloc[i] = max_for_seg
+    # 합이 L과 다를 수 있음 → 보정
+    diff = L - sum(alloc)
+    # diff>0 이면 P 큰 구간부터 +1, diff<0 이면 P 작은 구간부터 -1
+    order = sorted(range(len(segs)), key=lambda i: segs[i]["P"], reverse=(diff>0))
+    j = 0
+    while diff != 0 and j < len(order):
+        i = order[j]; j += 1
+        if diff > 0:
+            alloc[i] += 1; diff -= 1
+        else:
+            if alloc[i] > 0:
+                alloc[i] -= 1; diff += 1
+
+    # 구간별로 균등 삽입(간격 d_min 보장)
+    new_idx = set(kept_idx)
+    for s, cnt in zip(segs, alloc):
+        if cnt <= 0: continue
+        a, b = s["a"], s["b"]
+        seg_len_m = s["D"]
+        if seg_len_m <= 0: continue
+        # a~b 사이에 cnt개 배치: 누적 거리 기준 균등
+        target_ds = [(k+1)/(cnt+1) * seg_len_m for k in range(cnt)]
+        # 실제 누적거리 따라 가장 가까운 인덱스를 선택(중복 방지)
+        cum = 0.0
+        t_idx = 0
+        for i in range(a, b):
+            edge = _segment_len_m(points[i], points[i+1])
+            while t_idx < len(target_ds) and cum + edge >= target_ds[t_idx]:
+                # 이 지점에 삽입 후보: i 또는 i+1 중 더 멀리 떨어진 쪽
+                cand = i+1
+                if cand not in new_idx:
+                    new_idx.add(cand)
+                t_idx += 1
+            cum += edge
+
+    final_idx = sorted(list(new_idx))
+    # d_min 보장: 너무 가까운 점 제거(중요도 낮은 순)
+    pruned = []
+    last = None
+    for idx in final_idx:
+        if last is None:
+            pruned.append(idx); last = idx
+        else:
+            d = _segment_len_m(points[last], points[idx])
+            if d >= params.d_min_m:
+                pruned.append(idx); last = idx
+            else:
+                # 가까우면 중요도 작은 쪽 제거
+                if imp[idx] > imp[last]:
+                    pruned[-1] = idx
+                    last = idx
+                # else: idx 버림
+    return pruned[:params.max_points]
+
+def _rebalance_to_limit(idx_list, imp, max_points):
+    idx = sorted(idx_list)
+    if len(idx) <= max_points:
+        return idx, []
+    # 중요도 낮고 회전각 작은 순으로 제거
+    removed = []
+    # 간단히 imp 기준 정렬해서 뒤에서 제거
+    removable = idx[1:-1]  # 시작/끝 보호
+    removable_sorted = sorted(removable, key=lambda i: imp[i])
+    need = len(idx) - max_points
+    to_remove = set(removable_sorted[:need])
+    out = [i for i in idx if i not in to_remove]
+    removed = sorted(list(to_remove))
+    return out, removed
+
+def _validate_fill(points, idx, params: SamplingParams):
+    # d_max 초과 구간이 있으면 중간점을 더 넣고, 초과면 그대로(30 제한 우선)
+    out = list(idx)
+    changed = False
+    i = 0
+    while i < len(out)-1 and len(out) < params.max_points:
+        a, b = out[i], out[i+1]
+        d = _segment_len_m(points[a], points[b])
+        if d > params.d_max_m:
+            mid = (a + b)//2
+            if mid not in out and mid > a and mid < b:
+                out.insert(i+1, mid); changed = True
+            else:
+                i += 1
+        else:
+            i += 1
+    return out, changed
+
+def build_easy_path_waypoints(path_points: List[List[float]],
+                            params: SamplingParams = SamplingParams(),
+                            weights: SamplingWeights = SamplingWeights()):
+    """
+    입력: path_points = [[lon,lat], ...] (EASY 최종 경로)
+    출력: {path_point_30, kept_required, removed_indices, score_stats, keyword, metrics...}
+    """
+    n = len(path_points)
+    feat = _extract_features(path_points, params.theta_turn, params.theta_uturn)
+    imp = _score_importance(feat, weights)
+
+    # 필수점 + WRDP
+    req = _required_indices(n, feat, imp, tau=0.6)
+    kept_rdp, removed_rdp = _weighted_rdp(path_points, imp, params, keep=req)
+
+    # 적응형 페이싱으로 슬롯 채우기
+    idx = _adaptive_pacing(path_points, kept_rdp, imp, params)
+
+    # 리밸런싱(혹시 초과 시)
+    idx, removed_over = _rebalance_to_limit(idx, imp, params.max_points)
+
+    # d_max 검증/보정(30 제한 범위 내에서만)
+    idx, _ = _validate_fill(path_points, idx, params)
+
+    # 최종 좌표
+    path_30 = [[float(path_points[i][1]), float(path_points[i][0])] for i in idx]  # [lat,lng]로 반환
+
+    # 간단 메트릭
+    total_dist = 0.0
+    for i in range(n-1):
+        total_dist += _segment_len_m(path_points[i], path_points[i+1])
+
+    # lane change / uturn 추정치
+    lane_changes = sum(feat["lane_change"])
+    u_turns = sum(feat["is_uturn"])
+
+    # 중요도 통계
+    vals = [imp[i] for i in idx]
+    score_stats = {
+        "min": round(min(vals), 4) if vals else 0.0,
+        "p50": round(statistics.median(vals), 4) if vals else 0.0,
+        "p90": round(np.percentile(vals, 90), 4) if vals else 0.0,
+        "max": round(max(vals), 4) if vals else 0.0,
+    }
+
+    # 키워드
+    keyword = "안전경로"
+    if lane_changes <= 1: keyword += "|차선변경적음"
+    if u_turns == 0: keyword += "|유턴없음"
+
+    return {
+        "path_point_raw_count": n,
+        "path_point_30": path_30,  # [lat,lng] 배열 (카카오 경유지 입력에 바로 사용)
+        "keyword": keyword,
+        "duration": None,           # (원하면 kakao summary에서 채워넣기)
+        "distance": round(total_dist, 1),
+        "lane_changes": int(lane_changes),
+        "u_turns": int(u_turns),
+        "debug": {
+            "kept_required": sorted(list(req)),
+            "removed_indices": sorted(list(set(removed_rdp + removed_over))),
+            "score_stats": score_stats
+        }
+    }
+
 def haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371000.0
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
@@ -375,11 +732,16 @@ def call_kakao(origin, destination, **kwargs):
     r.raise_for_status()
     return r.json()
 
-@app.get("/", response_class=HTMLResponse)
-async def read_html():
-    with open(r"C:\Users\user\python_project\senior_beginner_navigation_pr\DIVE-PROME\frontend\web\easy_path_index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
-    return html_content
+#@app.get("/", response_class=HTMLResponse)
+#async def read_html():
+#    with open(r"C:\Users\user\python_project\senior_beginner_navigation_pr\DIVE-PROME\backend\test_index.html", "r", encoding="utf-8") as f:
+#        html_content = f.read()
+#    return html_content
+
+#(추가) 간단한 헬스체크
+@app.get("/health")
+async def health():
+    return {"ok": True}
 
 # ===================== 엔드포인트 =====================
 @app.post("/find-path")
@@ -636,12 +998,22 @@ async def find_path(body: RequestBody):
     elapsed = (time.time() - t0) * 1000.0
     logger.info(f"[DONE] source={final_source} path_points={len(final_path_points)} elapsed={elapsed:.1f}ms")
 
-    return {
-        "path_points": final_path_points,
-        "source": final_source,               # "initial" or "local"
-        "local_rerouted": local_rerouted,     # 구간 대체 여부
+    # === 여기부터 추가 (기존 EASY return 덩어리는 제거/교체) ===
+    EASY_SAMPLING_PARAMS = SamplingParams(
+        epsilon_base=35.0,   # 정식 필드명 ( *_m 아님 )
+        alpha=1.0,
+        beta=0.55,
+        d_min=120.0,
+        d_max=800.0
+    )
+    easy_sampling = build_easy_path_waypoints(final_path_points, params=EASY_SAMPLING_PARAMS)
+
+    resp = {
+        "path_points": final_path_points,        # [[lon,lat], ...]
+        "source": final_source,                  # "initial" | "local"
+        "local_rerouted": local_rerouted,
         "debug": {
-            "ranked_base_top": ranked_base[:3],         # 베이스 상위 3개 (요약용)
+            "ranked_base_top": ranked_base[:3],
             "best_initial": {
                 "id": best_route["id"],
                 "difficulty": best_route["difficulty"],
@@ -650,9 +1022,34 @@ async def find_path(body: RequestBody):
             "kakao_total_len_m": kakao_total_len_m,
             "difficult_segments": difficult_segments,
             "local_reroute_logs": reroute_logs,
+            # "rerouted_segments": rerouted_segments,  # (옵션) 파란표시용
+        },
+        "request_echo": {
+            "origin": {"x": body.origin.x, "y": body.origin.y},
+            "destination": {"x": body.destination.x, "y": body.destination.y},
+            "priority": body.priority.value if isinstance(body.priority, Enum) else str(body.priority)
         }
     }
 
+    # EASY라면 샘플링 섹션 포함
+    if body.priority == Priority.easy and final_path_points:
+        resp["sampling"] = {
+            "start": f"{final_path_points[0][1]},{final_path_points[0][0]}",
+            "end": f"{final_path_points[-1][1]},{final_path_points[-1][0]}",
+            "params": {
+                "max_points": 30,
+                "epsilon_base": 35.0,
+                "alpha": 1.0,
+                "beta": 0.55,
+                "theta_turn": 25,
+                "theta_uturn": 135,
+                "d_min": 120,
+                "d_max": 800
+            },
+            "routes": { "EASY_PATH": easy_sampling }
+        }
+
+    return resp
 # ===================== main =====================
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
