@@ -757,11 +757,11 @@ def call_kakao(origin, destination, **kwargs):
     r.raise_for_status()
     return r.json()
 
-@app.get("/", response_class=HTMLResponse)
-async def read_html():
-    with open(r"C:\Users\user\python_project\senior_beginner_navigation_pr\DIVE-PROME\backend\test_index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
-    return html_content
+#@app.get("/", response_class=HTMLResponse)
+#async def read_html():
+#    with open(r"C:\Users\user\python_project\senior_beginner_navigation_pr\DIVE-PROME\backend\test_index.html", "r", encoding="utf-8") as f:
+#        html_content = f.read()
+#    return html_content
 
 #(추가) 간단한 헬스체크
 @app.get("/health")
