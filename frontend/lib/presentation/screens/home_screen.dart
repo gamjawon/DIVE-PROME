@@ -434,19 +434,20 @@ class _RouteFormState extends State<RouteForm> {
                 onTap: _isButtonEnabled
                     ? () {
                         if (_startPlace != null && _endPlace != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => NaviScreen(
-                                startLat: _startPlace!.latitude,
-                                startLng: _startPlace!.longitude,
-                                goalLat: _endPlace!.latitude,
-                                goalLng: _endPlace!.longitude,
-                                startName: _startPlace!.name,
-                                goalName: _endPlace!.name,
-                              ),
-                            ),
-                          );
+                          // api 호출 및 경로 페이지로 이동 예정
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => RouteMapScreen(
+                          //       startLat: _startPlace!.latitude,
+                          //       startLng: _startPlace!.longitude,
+                          //       endLat: _endPlace!.latitude,
+                          //       endLng: _endPlace!.longitude,
+                          //       startName: _startPlace!.name,
+                          //       endName: _endPlace!.name,
+                          //     ),
+                          //   ),
+                          // );
                         }
                       }
                     : null,
