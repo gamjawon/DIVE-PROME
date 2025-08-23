@@ -15,7 +15,6 @@ class RouteRequest {
     return {
       'origin': {'x': startLng, 'y': startLat},
       'destination': {'x': endLng, 'y': endLat},
-      'priority': 'EASY',
     };
   }
 }

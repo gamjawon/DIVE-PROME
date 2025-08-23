@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -6,94 +7,60 @@ import '../models/route_request_model.dart';
 import '../models/route_response_model.dart';
 
 class RouteApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000';
+  // 플랫폼별 로컬 개발 URL
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000'; // 안드로이드 에뮬레이터용
+    } else if (Platform.isIOS) {
+      return 'http://localhost:8000'; // iOS 시뮬레이터용
+    } else {
+      return 'http://localhost:8000'; // 기타 플랫폼 (웹, 데스크톱)
+    }
+  }
 
   static Future<RouteResponse> getRoute(RouteRequest request) async {
+    final url = '$baseUrl/find-path';
     try {
-      print('API 요청: ${request.toJson()}');
+      print('API 요청 URL: $url');
+      print('API 요청 데이터: ${request.toJson()}');
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/find-path'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(request.toJson()),
-      );
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(request.toJson()),
+          )
+          .timeout(
+            const Duration(seconds: 30), // 30초 타임아웃
+            onTimeout: () {
+              throw Exception('API 호출 타임아웃 (30초)');
+            },
+          );
 
       print('API 응답 상태: ${response.statusCode}');
-      print('API 응답 내용: ${response.body}');
-
       if (response.statusCode == 200) {
+        print('API 응답 성공: ${response.body.length} bytes');
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-
-        // API에서 받은 경로 데이터 추출
-        final apiPathPoints =
-            (responseData['path_points'] as List<dynamic>?)
-                ?.map(
-                  (point) => (point as List<dynamic>)
-                      .map((coord) => (coord as num).toDouble())
-                      .toList(),
-                )
-                .toList()
-                .cast<List<double>>() ??
-            [];
-
-        // 실제 경로 데이터를 기반으로 3가지 변형 경로 생성
-        return _createThreeRoutesFromApi(apiPathPoints);
+        return RouteResponse.fromJson(responseData);
       } else {
-        throw Exception('Failed to get route: ${response.statusCode}');
+        print('API 응답 실패: ${response.body}');
+        throw Exception(
+          'Failed to get route: ${response.statusCode} - ${response.body}',
+        );
       }
     } catch (e) {
-      print('API 에러: $e');
-      // API 실패 시 하드코딩된 값 반환
-      return _getHardcodedRouteResponse();
+      print('API 에러 상세: $e');
+      print('사용 중인 URL: $url');
+      print('플랫폼: ${Platform.operatingSystem}');
+      // API 실패 시 더미 데이터 반환
+      return _getDummyRouteResponse();
     }
   }
 
-  static RouteResponse _createThreeRoutesFromApi(
-    List<List<double>> apiPathPoints,
-  ) {
-    if (apiPathPoints.isEmpty) {
-      return _getHardcodedRouteResponse();
-    }
-
-    return RouteResponse(
-      routes: [
-        // 쉬운 길 추천 - 원본 경로 사용
-        RouteInfo(
-          option: RouteOption.easy,
-          pathPoints: apiPathPoints,
-          distance: 22.0,
-          duration: 30,
-          laneChanges: 3,
-          hasUturn: false,
-          steepRoads: 1,
-        ),
-        // 내비 추천 - 약간 변형된 경로
-        RouteInfo(
-          option: RouteOption.navi,
-          pathPoints: _createVariantRoute(apiPathPoints, 1),
-          distance: 20.5,
-          duration: 28,
-          laneChanges: 4,
-          hasUturn: true,
-          steepRoads: 1,
-        ),
-        // 큰길 우선 - 더 변형된 경로
-        RouteInfo(
-          option: RouteOption.wide,
-          pathPoints: _createVariantRoute(apiPathPoints, 2),
-          distance: 19.8,
-          duration: 25,
-          laneChanges: 6,
-          hasUturn: false,
-          steepRoads: 2,
-        ),
-      ],
-    );
-  }
-
-  static RouteResponse _getHardcodedRouteResponse() {
-    // 하드코딩된 경로 데이터 (부산 지역 예시)
-    final baseRoute = [
+  // API 실패 시 사용할 더미 데이터
+  static RouteResponse _getDummyRouteResponse() {
+    // 부산 지역 더미 경로 데이터
+    final dummyPathPoints = [
       [129.0756, 35.1171], // 부산역
       [129.0750, 35.1180],
       [129.0745, 35.1190],
@@ -104,36 +71,47 @@ class RouteApiService {
       [129.0720, 35.1240], // 서면교차로 인근
     ];
 
+    final dummyDisplayPoints = [
+      [129.0756, 35.1171], // 부산역
+      [129.0740, 35.1200],
+      [129.0720, 35.1240], // 서면교차로 인근
+    ];
+
     return RouteResponse(
-      routes: [
-        RouteInfo(
-          option: RouteOption.easy,
-          pathPoints: baseRoute,
-          distance: 22.0,
-          duration: 30,
+      routes: {
+        'EASY': RouteInfo(
+          label: 'EASY',
+          pathPoints: dummyPathPoints,
+          displayPathPoints: dummyDisplayPoints,
+          distanceM: 2200.0,
+          durationSec: 1800, // 30분
           laneChanges: 3,
-          hasUturn: false,
-          steepRoads: 1,
+          uTurns: 0,
         ),
-        RouteInfo(
-          option: RouteOption.navi,
-          pathPoints: _createVariantRoute(baseRoute, 1),
-          distance: 20.5,
-          duration: 28,
+        'RECOMMEND': RouteInfo(
+          label: 'RECOMMEND',
+          pathPoints: _createVariantRoute(dummyPathPoints, 1),
+          displayPathPoints: dummyDisplayPoints,
+          distanceM: 2050.0,
+          durationSec: 1680, // 28분
           laneChanges: 4,
-          hasUturn: true,
-          steepRoads: 1,
+          uTurns: 1,
         ),
-        RouteInfo(
-          option: RouteOption.wide,
-          pathPoints: _createVariantRoute(baseRoute, 2),
-          distance: 19.8,
-          duration: 25,
+        'MAIN_ROAD': RouteInfo(
+          label: 'MAIN_ROAD',
+          pathPoints: _createVariantRoute(dummyPathPoints, 2),
+          displayPathPoints: dummyDisplayPoints,
+          distanceM: 1980.0,
+          durationSec: 1500, // 25분
           laneChanges: 6,
-          hasUturn: false,
-          steepRoads: 2,
+          uTurns: 0,
         ),
-      ],
+      },
+      requestEcho: {
+        'origin': {'x': 129.0756, 'y': 35.1171},
+        'destination': {'x': 129.0720, 'y': 35.1240},
+      },
+      elapsedMs: 250.0,
     );
   }
 
@@ -160,15 +138,15 @@ class RouteApiService {
       final offsetFactor = (index / baseRoute.length) * 0.001;
 
       switch (variant) {
-        case 1: // 내비 추천
+        case 1: // RECOMMEND
           offsetLng = offsetFactor;
           offsetLat = offsetFactor * 0.5;
           break;
-        case 2: // 큰길 우선
+        case 2: // MAIN_ROAD
           offsetLng = offsetFactor * 1.5;
           offsetLat = -offsetFactor * 0.5;
           break;
-        default: // 쉬운 길
+        default: // EASY
           offsetLng = 0.0;
           offsetLat = 0.0;
           break;

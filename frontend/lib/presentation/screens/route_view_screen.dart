@@ -21,8 +21,8 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   // 경로별 색상 정의
   static const Map<RouteOption, Color> _routeColors = {
     RouteOption.easy: Color(0xFFFF792B), // 주황색
-    RouteOption.navi: Color(0xFF4285F4), // 파란색
-    RouteOption.wide: Color(0xFF34A853), // 초록색
+    RouteOption.recommend: Color(0xFF4285F4), // 파란색
+    RouteOption.mainRoad: Color(0xFF34A853), // 초록색
   };
   static const Color _inactiveRouteColor = Color(0xFFD1D5DB);
 
@@ -143,9 +143,13 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   Widget _buildBottomContainer() {
     if (_routeResponse == null) return SizedBox.shrink();
 
-    final selectedRoute = _routeResponse!.routes.firstWhere(
+    // routes는 이제 Map<String, RouteInfo> 형태입니다
+    final routeList = _routeResponse!.routeList;
+    if (routeList.isEmpty) return SizedBox.shrink();
+
+    final selectedRoute = routeList.firstWhere(
       (route) => route.option == _selectedOption,
-      orElse: () => _routeResponse!.routes.first,
+      orElse: () => routeList.first,
     );
 
     return Positioned(
@@ -167,7 +171,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // 경로 옵션 탭
-            Container(
+            SizedBox(
               height: 76,
               child: Row(
                 children: RouteOption.values.map((option) {
@@ -179,14 +183,14 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? optionColor.withOpacity(0.1)
+                              ? optionColor.withValues(alpha: 0.1)
                               : Colors.white,
                           borderRadius: BorderRadius.only(
                             topLeft: Radius.circular(
                               option == RouteOption.easy ? 23.06 : 0,
                             ),
                             topRight: Radius.circular(
-                              option == RouteOption.wide ? 23.06 : 0,
+                              option == RouteOption.mainRoad ? 23.06 : 0,
                             ),
                           ),
                         ),
@@ -229,7 +233,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                             Row(
                               children: [
                                 Text(
-                                  '${selectedRoute.duration}분',
+                                  '${selectedRoute.durationMin}분',
                                   style: TextStyle(
                                     fontSize: 40,
                                     fontWeight: FontWeight.w700,
@@ -252,7 +256,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '${selectedRoute.distance.toStringAsFixed(0)}km',
+                                  '${selectedRoute.distanceKm.toStringAsFixed(1)}km',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.w400,
@@ -264,22 +268,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                             SizedBox(height: 24),
                             // 경로 특성 태그
                             Row(
-                              children: [
-                                _buildRouteTag(
-                                  '완만함',
-                                  selectedRoute.steepRoads <= 1,
-                                ),
-                                SizedBox(width: 8),
-                                _buildRouteTag(
-                                  '넓은 폭',
-                                  selectedRoute.option == RouteOption.wide,
-                                ),
-                                SizedBox(width: 8),
-                                _buildRouteTag(
-                                  '낮은 경사',
-                                  selectedRoute.steepRoads == 0,
-                                ),
-                              ],
+                              children: _buildRouteTags(selectedRoute.option),
                             ),
                           ],
                         ),
@@ -341,12 +330,12 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                       ),
                       _buildStatItem(
                         'U턴 횟수',
-                        selectedRoute.hasUturn ? '있음' : '없음',
+                        '${selectedRoute.uTurns}회',
                         _routeColors[_selectedOption]!,
                       ),
                       _buildStatItem(
-                        '급경사 횟수',
-                        '${selectedRoute.steepRoads}회',
+                        '급경사로 수',
+                        '1회',
                         _routeColors[_selectedOption]!,
                       ),
                     ],
@@ -360,7 +349,33 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     );
   }
 
-  Widget _buildRouteTag(String label, bool isHighlighted) {
+  List<Widget> _buildRouteTags(RouteOption option) {
+    List<String> tags = [];
+
+    switch (option) {
+      case RouteOption.recommend:
+        tags = ['거리 우선', '시간 우선'];
+        break;
+      case RouteOption.mainRoad:
+        tags = ['넓은폭', '주요도로'];
+        break;
+      case RouteOption.easy:
+        tags = ['적은 정체량', '넓은폭', '편한길'];
+        break;
+    }
+
+    List<Widget> tagWidgets = [];
+    for (int i = 0; i < tags.length; i++) {
+      if (i > 0) {
+        tagWidgets.add(SizedBox(width: 8));
+      }
+      tagWidgets.add(_buildRouteTag(tags[i]));
+    }
+
+    return tagWidgets;
+  }
+
+  Widget _buildRouteTag(String label) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -419,7 +434,8 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     }
 
     // 첫 번째 경로의 중심점으로 지도 초기화
-    final firstRoute = _routeResponse!.routes.first;
+    final routeList = _routeResponse!.routeList;
+    final firstRoute = routeList.first;
     if (firstRoute.pathPoints.isEmpty) {
       return const Center(child: Text('경로 좌표가 없습니다.'));
     }
@@ -448,8 +464,10 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   void _drawAllRoutes() {
     if (_mapController == null || _routeResponse == null) return;
 
+    final routeList = _routeResponse!.routeList;
+
     // 먼저 비활성화된 경로들을 그리기 (아래 레이어)
-    for (final route in _routeResponse!.routes) {
+    for (final route in routeList) {
       if (route.option != _selectedOption) {
         final routePoints = route.pathPoints
             .map((point) => LatLng(point[1], point[0]))
@@ -470,9 +488,9 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     }
 
     // 그 다음 활성화된 경로를 그리기 (위 레이어)
-    final selectedRoute = _routeResponse!.routes.firstWhere(
+    final selectedRoute = routeList.firstWhere(
       (route) => route.option == _selectedOption,
-      orElse: () => _routeResponse!.routes.first,
+      orElse: () => routeList.first,
     );
 
     final selectedRoutePoints = selectedRoute.pathPoints
@@ -519,9 +537,11 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   void _adjustCamera() {
     if (_mapController == null || _routeResponse == null) return;
 
+    final routeList = _routeResponse!.routeList;
+
     // 모든 경로 포인트를 고려하여 경계 계산
     final allPoints = <LatLng>[];
-    for (final route in _routeResponse!.routes) {
+    for (final route in routeList) {
       allPoints.addAll(
         route.pathPoints.map((point) => LatLng(point[1], point[0])),
       );

@@ -125,8 +125,8 @@ class TopStatusBar extends ConsumerWidget {
               ),
             ),
             child: ClipOval(
-              child: SvgPicture.asset(
-                'assets/icons/profile.svg',
+              child: Image.asset(
+                'assets/icons/profile.png',
                 width: 36.76,
                 height: 36.76,
                 fit: BoxFit.cover,
@@ -265,9 +265,9 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       routeState.whenData((response) {
         if (response != null && response.routes.isNotEmpty) {
           print('총 경로 개수: ${response.routes.length}');
-          for (var route in response.routes) {
+          for (var route in response.routeList) {
             print(
-              '${route.option.displayName}: ${route.pathPoints.length}개 좌표, ${route.distance}km, ${route.duration}분',
+              '${route.option.displayName}: ${route.pathPoints.length}개 좌표, ${route.distanceKm}km, ${route.durationMin}분',
             );
           }
         }
