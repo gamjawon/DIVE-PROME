@@ -92,6 +92,31 @@ class SamplingWeights:
     w_intersection: float = 0.10
     w_class: float = 0.05
     w_hazard: float = 0.05
+def _kakao_first_route_polyline_lonlat(kakao_json) -> List[List[float]]:
+    """Kakao routes[0] → [[lon,lat], ...] 추출"""
+    pts = []
+    try:
+        routes = kakao_json.get("routes", []) or []
+        if not routes: return []
+        rt = routes[0]
+        for sec in rt.get("sections", []) or []:
+            for rd in sec.get("roads", []) or []:
+                vx = rd.get("vertexes", []) or []
+                for i in range(0, len(vx) - 1, 2):
+                    pts.append([float(vx[i]), float(vx[i+1])])
+    except Exception:
+        pass
+    return pts
+
+def _kakao_summary(kakao_json) -> Tuple[int, int]:
+    """(duration_sec, distance_m)"""
+    try:
+        routes = kakao_json.get("routes", []) or []
+        if not routes: return 0, 0
+        sm = routes[0].get("summary", {}) or {}
+        return int(float(sm.get("duration", 0))), int(float(sm.get("distance", 0)))
+    except Exception:
+        return 0, 0
 
 def _angle_deg(a, b, c):
     # a,b,c: [lon,lat]
@@ -754,17 +779,51 @@ async def find_path(body: RequestBody):
     logger.info(f"[REQ] priority={body.priority} origin=({body.origin.x:.6f},{body.origin.y:.6f}) "
                 f"dest=({body.destination.x:.6f},{body.destination.y:.6f}) waypoints={len(waypoints_coords)}")
 
-    # EASY가 아니면 카카오 원본 반환
     if body.priority != Priority.easy:
         kakao_json = call_kakao(
             origin_coords,
             destination_coords,
-            priority=body.priority.value,   # Enum -> 문자열
+            priority=body.priority.value,
             waypoints=waypoints_coords,
             alternatives=True,
             road_details=True
         )
-        return kakao_json
+        # 그리기용 폴리라인/요약 추출
+        path_points = _kakao_first_route_polyline_lonlat(kakao_json)
+        duration_sec, distance_m = _kakao_summary(kakao_json)
+
+        # 30 포인트 샘플링 (EASY와 동일 포맷으로 반환)
+        DEFAULT_SAMPLING = SamplingParams(
+            epsilon_base=35.0, alpha=1.0, beta=0.55, d_min=120.0, d_max=800.0
+        )
+        priority_sampling = build_easy_path_waypoints(path_points, params=DEFAULT_SAMPLING)
+
+        # 통일 응답
+        return {
+            "path_points": path_points,            # [[lon,lat], ...] (참고)
+            "priority": body.priority.value,
+            "duration_sec": duration_sec,
+            "distance_m": distance_m,
+            "kakao_final": kakao_json,             # ✅ 프런트는 여기로 최종 그리기
+            "request_echo": {
+                "origin": {"x": body.origin.x, "y": body.origin.y},
+                "destination": {"x": body.destination.x, "y": body.destination.y},
+                "priority": body.priority.value
+            },
+            # EASY와 동일 키 구조로 샘플링 제공(키 이름은 통일해서 EASY_PATH 사용)
+            "sampling": {
+                "start": f"{path_points[0][1]},{path_points[0][0]}" if path_points else None,
+                "end": f"{path_points[-1][1]},{path_points[-1][0]}" if path_points else None,
+                "params": {
+                    "max_points": 30, "epsilon_base": 35.0, "alpha": 1.0, "beta": 0.55,
+                    "theta_turn": 25, "theta_uturn": 135, "d_min": 120, "d_max": 800
+                },
+                "routes": {
+                    "EASY_PATH": priority_sampling   # 동일 키로 통일(프런트 수정 최소화)
+                }
+            }
+        }
+
 
     # EASY: 큰길 우선 경로들을 밑재료로 받아서 우리 '쉬운 길' 후처리
     kakao_json = call_kakao(
@@ -991,6 +1050,7 @@ async def find_path(body: RequestBody):
                     "reason": reason
                 })
 
+    # ... (EASY 경로 계산/우회/샘플링 완료 후)
     if local_rerouted:
         final_path_points = local_path_points
         final_source = "local"
@@ -998,20 +1058,51 @@ async def find_path(body: RequestBody):
     elapsed = (time.time() - t0) * 1000.0
     logger.info(f"[DONE] source={final_source} path_points={len(final_path_points)} elapsed={elapsed:.1f}ms")
 
-    # === 여기부터 추가 (기존 EASY return 덩어리는 제거/교체) ===
+    # 1) EASY 샘플링 생성 (이미 있다면 재사용)
     EASY_SAMPLING_PARAMS = SamplingParams(
-        epsilon_base=35.0,   # 정식 필드명 ( *_m 아님 )
-        alpha=1.0,
-        beta=0.55,
-        d_min=120.0,
-        d_max=800.0
+        epsilon_base=35.0, alpha=1.0, beta=0.55, d_min=120.0, d_max=800.0
     )
     easy_sampling = build_easy_path_waypoints(final_path_points, params=EASY_SAMPLING_PARAMS)
 
+    # 2) 카카오 "최종 그리기용" 재호출 (경유지 ≤ 30)
+    #    샘플링( [ [lat,lng], ... ] ) → Kakao waypoints (x=lng, y=lat), 시작/끝 제외
+    wps = []
+    try:
+        pts_latlng = easy_sampling.get("path_point_30", []) or []
+        for lat, lng in pts_latlng[1:-1]:
+            wps.append({"x": float(lng), "y": float(lat)})
+    except Exception:
+        pass
+
+    kakao_final = None
+    try:
+        kakao_final = call_kakao(
+            origin_coords,
+            destination_coords,
+            priority=Priority.recommend.value,    # 권장: 추천으로 재계산(경유지 고정)
+            waypoints=wps,
+            alternatives=False,
+            road_details=True
+        )
+    except Exception as e:
+        logger.warning(f"[EASY] Kakao re-call failed: {e}")
+        kakao_final = None
+
+    if kakao_final:
+        duration_sec, distance_m = _kakao_summary(kakao_final)
+    else:
+        # 폴백: 내부 추정(초단위) 및 길이 추정
+        duration_sec = int(best_route.get("etaMin", 0) * 60)
+        distance_m = int(kakao_total_len_m)
+
     resp = {
-        "path_points": final_path_points,        # [[lon,lat], ...]
-        "source": final_source,                  # "initial" | "local"
+        "path_points": final_path_points,    # [[lon,lat], ...] 참고용
+        "priority": Priority.easy.value,
+        "source": final_source,              # "initial" | "local"
         "local_rerouted": local_rerouted,
+        "duration_sec": duration_sec,        # ✅ 항상 포함
+        "distance_m": distance_m,
+        "kakao_final": kakao_final,          # ✅ 프런트는 여기로 최종 그리기
         "debug": {
             "ranked_base_top": ranked_base[:3],
             "best_initial": {
@@ -1022,34 +1113,26 @@ async def find_path(body: RequestBody):
             "kakao_total_len_m": kakao_total_len_m,
             "difficult_segments": difficult_segments,
             "local_reroute_logs": reroute_logs,
-            # "rerouted_segments": rerouted_segments,  # (옵션) 파란표시용
         },
         "request_echo": {
             "origin": {"x": body.origin.x, "y": body.origin.y},
             "destination": {"x": body.destination.x, "y": body.destination.y},
-            "priority": body.priority.value if isinstance(body.priority, Enum) else str(body.priority)
+            "priority": Priority.easy.value
+        },
+        "sampling": {
+            "start": f"{final_path_points[0][1]},{final_path_points[0][0]}" if final_path_points else None,
+            "end": f"{final_path_points[-1][1]},{final_path_points[-1][0]}" if final_path_points else None,
+            "params": {
+                "max_points": 30, "epsilon_base": 35.0, "alpha": 1.0, "beta": 0.55,
+                "theta_turn": 25, "theta_uturn": 135, "d_min": 120, "d_max": 800
+            },
+            "routes": {
+                "EASY_PATH": easy_sampling
+            }
         }
     }
-
-    # EASY라면 샘플링 섹션 포함
-    if body.priority == Priority.easy and final_path_points:
-        resp["sampling"] = {
-            "start": f"{final_path_points[0][1]},{final_path_points[0][0]}",
-            "end": f"{final_path_points[-1][1]},{final_path_points[-1][0]}",
-            "params": {
-                "max_points": 30,
-                "epsilon_base": 35.0,
-                "alpha": 1.0,
-                "beta": 0.55,
-                "theta_turn": 25,
-                "theta_uturn": 135,
-                "d_min": 120,
-                "d_max": 800
-            },
-            "routes": { "EASY_PATH": easy_sampling }
-        }
-
     return resp
+
 # ===================== main =====================
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
