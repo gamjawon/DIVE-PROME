@@ -16,6 +16,10 @@ class EasyNaviApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Easy Navi', home: HomeScreen());
+    return MaterialApp(
+      title: 'Easy Navi',
+      debugShowCheckedModeBanner: false, // 디버그 배너 제거
+      home: HomeScreen(),
+    );
   }
 }
