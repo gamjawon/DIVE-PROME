@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>쉬운길/큰길/추천 테스트</title>
+  <style>
+    html, body {height:100%; margin:0}
+    #toolbar {padding:10px; display:flex; gap:8px; align-items:center; border-bottom:1px solid #eee}
+    #map {height:calc(100% - 56px)}
+    input, select, button {padding:8px}
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <input id="oLat" type="number" step="0.000001" placeholder="출발 위도" value="35.153204" />
+    <input id="oLng" type="number" step="0.000001" placeholder="출발 경도" value="129.118974" />
+    <input id="dLat" type="number" step="0.000001" placeholder="도착 위도" value="35.158503" />
+    <input id="dLng" type="number" step="0.000001" placeholder="도착 경도" value="129.159780" />
+    <select id="priority">
+      <option value="EASY">EASY</option>
+      <option value="MAIN_ROAD">MAIN_ROAD</option>
+      <option value="RECOMMEND" selected>RECOMMEND</option>
+    </select>
+    <button id="go">요청</button>
+    <span id="dur"></span>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=93c6895072514dd0107099d6773d4933&autoload=false"></script>
+  <script>
+    kakao.maps.load(() => {
+      const map = new kakao.maps.Map(document.getElementById('map'), {
+        center: new kakao.maps.LatLng(35.1532, 129.1189), level: 5
+      });
+      let line = null, markers = [];
+
+      function clearMap(){
+        if(line){line.setMap(null); line=null;}
+        markers.forEach(m=>m.setMap(null)); markers=[];
+      }
+      function drawFromKakaoFinal(kakao_final){
+        const routes = kakao_final?.routes || [];
+        if(!routes.length) throw new Error('kakao_final.routes empty');
+        const pts = [];
+        for(const sec of routes[0].sections || []){
+          for(const rd of sec.roads || []){
+            const vx = rd.vertexes || [];
+            for(let i=0;i+1<vx.length;i+=2){
+              pts.push(new kakao.maps.LatLng(vx[i+1], vx[i]));
+            }
+          }
+        }
+        line = new kakao.maps.Polyline({
+          path: pts, strokeWeight: 5, strokeOpacity: 0.9, strokeColor: '#0066ff'
+        });
+        line.setMap(map);
+        const b = new kakao.maps.LatLngBounds();
+        pts.forEach(p=>b.extend(p));
+        if(!b.isEmpty()) map.setBounds(b);
+      }
+
+      document.getElementById('go').onclick = async () => {
+        clearMap();
+        const oLat = parseFloat(document.getElementById('oLat').value);
+        const oLng = parseFloat(document.getElementById('oLng').value);
+        const dLat = parseFloat(document.getElementById('dLat').value);
+        const dLng = parseFloat(document.getElementById('dLng').value);
+        const priority = document.getElementById('priority').value;
+
+        const body = {
+          origin: {x:oLng, y:oLat},
+          destination: {x:dLng, y:dLat},
+          priority
+        };
+        const resp = await fetch('http://localhost:8000/find-path', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        if(!resp.ok) { alert('HTTP '+resp.status); return; }
+        const data = await resp.json();
+
+        // duration 표시
+        document.getElementById('dur').innerText =
+          `duration: ${Math.round((data.duration_sec||0)/60)} min`;
+
+        if(data.kakao_final){
+          drawFromKakaoFinal(data.kakao_final);           // ✅ 항상 Kakao 경로로 그리기
+        }else{
+          // 폴백: path_points로 그리기
+          const pts = (data.path_points||[]).map(([lon,lat])=>new kakao.maps.LatLng(lat, lon));
+          line = new kakao.maps.Polyline({path: pts, strokeWeight:5, strokeColor:'#ff0000'});
+          line.setMap(map);
+        }
+
+        // EASY일 때 샘플링 마커(선택)
+        const easy = data.sampling?.routes?.EASY_PATH?.path_point_30 || [];
+        for(const [lat,lng] of easy){
+          const mk = new kakao.maps.Marker({position: new kakao.maps.LatLng(lat, lng)});
+          mk.setMap(map); markers.push(mk);
+        }
+      };
+    });
+  </script>
+</body>
+</html>

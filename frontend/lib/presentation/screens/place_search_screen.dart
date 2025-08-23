@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:frontend/models/place_model.dart';
+import 'package:frontend/providers/location_provider.dart';
 import 'package:frontend/services/kakao_local_service.dart';
 
-class PlaceSearchScreen extends StatefulWidget {
+class PlaceSearchScreen extends ConsumerStatefulWidget {
   final String title;
   final String hintText;
 
@@ -13,10 +16,10 @@ class PlaceSearchScreen extends StatefulWidget {
   });
 
   @override
-  State<PlaceSearchScreen> createState() => _PlaceSearchScreenState();
+  ConsumerState<PlaceSearchScreen> createState() => _PlaceSearchScreenState();
 }
 
-class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
+class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final KakaoLocalService _kakaoLocalService = KakaoLocalService();
 
@@ -63,6 +66,31 @@ class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
     Navigator.pop(context, place);
   }
 
+  void _selectCurrentLocation() {
+    final locationState = ref.read(locationNotifierProvider);
+    locationState.whenData((location) {
+      if (location != null) {
+        final currentLocationPlace = Place(
+          id: 'current_location',
+          placeName: '현재 위치',
+          addressName: location.address,
+          roadAddressName: location.address,
+          x: location.longitude,
+          y: location.latitude,
+          categoryName: '현재위치',
+        );
+        Navigator.pop(context, currentLocationPlace);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('현재 위치 정보를 가져올 수 없습니다.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,7 +121,7 @@ class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0xFFFD9874), width: 1.0),
+              border: Border.all(color: Color(0xFFFD9874), width: 1.5),
             ),
             child: TextField(
               controller: _searchController,
@@ -127,6 +155,35 @@ class _PlaceSearchScreenState extends State<PlaceSearchScreen> {
                 fontSize: 16,
                 fontFamily: 'Pretendard',
                 fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          // 현재 위치 버튼
+          GestureDetector(
+            onTap: _selectCurrentLocation,
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 3, horizontal: 16),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    'assets/icons/pin.svg',
+                    width: 20,
+                    height: 20,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    '현위치',
+                    style: TextStyle(
+                      color: const Color(0xFFFF5930),
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w600,
+                      height: 1.50,
+                      letterSpacing: 0.09,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

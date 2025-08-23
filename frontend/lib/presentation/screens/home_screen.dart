@@ -5,7 +5,9 @@ import 'package:frontend/models/place_model.dart';
 import 'package:frontend/models/selected_place.dart';
 import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/presentation/screens/place_search_screen.dart';
+import 'package:frontend/presentation/screens/route_view_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
+import 'package:frontend/providers/route_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -178,16 +180,16 @@ class TopStatusBar extends ConsumerWidget {
   }
 }
 
-class RouteForm extends StatefulWidget {
+class RouteForm extends ConsumerStatefulWidget {
   const RouteForm({super.key, required this.screenWidth});
 
   final double screenWidth;
 
   @override
-  State<RouteForm> createState() => _RouteFormState();
+  ConsumerState<RouteForm> createState() => _RouteFormState();
 }
 
-class _RouteFormState extends State<RouteForm> {
+class _RouteFormState extends ConsumerState<RouteForm> {
   final TextEditingController _startController = TextEditingController();
   final TextEditingController _endController = TextEditingController();
   SelectedPlace? _startPlace;
@@ -246,6 +248,50 @@ class _RouteFormState extends State<RouteForm> {
     }
   }
 
+  Future<void> _findRoute() async {
+    if (_startPlace == null || _endPlace == null) return;
+
+    try {
+      await ref
+          .read(routeProvider.notifier)
+          .getRoute(
+            startLat: _startPlace!.latitude,
+            startLng: _startPlace!.longitude,
+            endLat: _endPlace!.latitude,
+            endLng: _endPlace!.longitude,
+          );
+
+      // 경로 결과 출력
+      final routeState = ref.read(routeProvider);
+      routeState.whenData((response) {
+        if (response != null && response.routes.isNotEmpty) {
+          print('총 경로 개수: ${response.routes.length}');
+          for (var route in response.routes) {
+            print(
+              '${route.option.displayName}: ${route.pathPoints.length}개 좌표, ${route.distance}km, ${route.duration}분',
+            );
+          }
+        }
+      });
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RouteViewScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('경로를 찾을 수 없습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _selectEndPlace() async {
     final result = await Navigator.push<Place>(
       context,
@@ -266,6 +312,9 @@ class _RouteFormState extends State<RouteForm> {
 
   @override
   Widget build(BuildContext context) {
+    final routeState = ref.watch(routeProvider);
+    final isLoading = routeState.isLoading;
+
     return Container(
       height: 200,
       decoration: ShapeDecoration(
@@ -412,7 +461,7 @@ class _RouteFormState extends State<RouteForm> {
             width: double.infinity,
             height: 56,
             decoration: ShapeDecoration(
-              gradient: _isButtonEnabled
+              gradient: (_isButtonEnabled && !isLoading)
                   ? LinearGradient(
                       begin: Alignment(1.00, 0.50),
                       end: Alignment(0.00, 0.50),
@@ -422,7 +471,9 @@ class _RouteFormState extends State<RouteForm> {
                       ],
                     )
                   : null,
-              color: _isButtonEnabled ? null : const Color(0xFFE5E7EB),
+              color: (_isButtonEnabled && !isLoading)
+                  ? null
+                  : const Color(0xFFE5E7EB),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -431,39 +482,31 @@ class _RouteFormState extends State<RouteForm> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: _isButtonEnabled
-                    ? () {
-                        if (_startPlace != null && _endPlace != null) {
-                          // api 호출 및 경로 페이지로 이동 예정
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => RouteMapScreen(
-                          //       startLat: _startPlace!.latitude,
-                          //       startLng: _startPlace!.longitude,
-                          //       endLat: _endPlace!.latitude,
-                          //       endLng: _endPlace!.longitude,
-                          //       startName: _startPlace!.name,
-                          //       endName: _endPlace!.name,
-                          //     ),
-                          //   ),
-                          // );
-                        }
-                      }
-                    : null,
+                onTap: (_isButtonEnabled && !isLoading) ? _findRoute : null,
                 child: Center(
-                  child: Text(
-                    '길찾기',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: _isButtonEnabled
-                          ? Colors.white
-                          : const Color(0xFF9CA3AF),
-                      fontSize: 18,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          '길찾기',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: (_isButtonEnabled && !isLoading)
+                                ? Colors.white
+                                : const Color(0xFF9CA3AF),
+                            fontSize: 18,
+                            fontFamily: 'Pretendard',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ),
               ),
             ),
