@@ -264,10 +264,13 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       // 경로 결과 출력
       final routeState = ref.read(routeProvider);
       routeState.whenData((response) {
-        if (response != null) {
-          print('경로 좌표 개수: ${response.pathPoints.length}');
-          print('첫 번째 좌표: ${response.pathPoints.first}');
-          print('마지막 좌표: ${response.pathPoints.last}');
+        if (response != null && response.routes.isNotEmpty) {
+          print('총 경로 개수: ${response.routes.length}');
+          for (var route in response.routes) {
+            print(
+              '${route.option.displayName}: ${route.pathPoints.length}개 좌표, ${route.distance}km, ${route.duration}분',
+            );
+          }
         }
       });
 

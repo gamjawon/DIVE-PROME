@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:frontend/models/route_response_model.dart';
 import 'package:frontend/providers/route_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
@@ -13,7 +14,16 @@ class RouteViewScreen extends ConsumerStatefulWidget {
 
 class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   KakaoMapController? _mapController;
-  List<LatLng> _routePoints = [];
+  RouteOption _selectedOption = RouteOption.easy;
+  RouteResponse? _routeResponse;
+
+  // 경로별 색상 정의
+  static const Map<RouteOption, Color> _routeColors = {
+    RouteOption.easy: Color(0xFFFF792B), // 주황색
+    RouteOption.navi: Color(0xFF4285F4), // 파란색
+    RouteOption.wide: Color(0xFF34A853), // 초록색
+  };
+  static const Color _inactiveRouteColor = Color(0xFFD1D5DB);
 
   @override
   Widget build(BuildContext context) {
@@ -24,130 +34,96 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
         children: [
           routeState.when(
             data: (routeResponse) {
-              if (routeResponse == null) {
+              if (routeResponse == null || routeResponse.routes.isEmpty) {
                 return const Center(child: Text('경로 데이터가 없습니다.'));
               }
 
-              // 경로 좌표를 LatLng 리스트로 변환
-              _routePoints = routeResponse.pathPoints
-                  .map(
-                    (point) => LatLng(point[1], point[0]),
-                  ) // [경도, 위도] -> LatLng(위도, 경도)
-                  .toList();
-
-              if (_routePoints.isEmpty) {
-                return const Center(child: Text('경로 좌표가 없습니다.'));
-              }
-
+              _routeResponse = routeResponse;
               return _buildMap();
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, stack) => Center(child: Text('오류: $error')),
           ),
-          Positioned(
-            top: 70,
-            left: 40,
-            right: 40,
+          _buildTopBar(),
+          _buildBottomContainer(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopBar() {
+    return Positioned(
+      top: 70,
+      left: 40,
+      right: 40,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: SvgPicture.asset(
+              'assets/icons/back.svg',
+              width: 30,
+              height: 30,
+            ),
+          ),
+          Container(
+            width: 300,
+            height: 60,
+            decoration: ShapeDecoration(
+              color: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              shadows: [
+                BoxShadow(
+                  color: Color(0x3F9F9F9F),
+                  blurRadius: 3.84,
+                  offset: Offset(-0.96, 0),
+                  spreadRadius: 0,
+                ),
+                BoxShadow(
+                  color: Color(0x3F787878),
+                  blurRadius: 3.84,
+                  offset: Offset(0.96, 0.96),
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: SvgPicture.asset(
-                    'assets/icons/back.svg',
-                    width: 30,
-                    height: 30,
+                Text(
+                  '부산역',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF374151),
+                    fontSize: 20,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                    height: 1.29,
                   ),
                 ),
                 Container(
-                  width: 300,
-                  height: 60,
-                  decoration: ShapeDecoration(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    shadows: [
-                      BoxShadow(
-                        color: Color(0x3F9F9F9F),
-                        blurRadius: 3.84,
-                        offset: Offset(-0.96, 0),
-                        spreadRadius: 0,
-                      ),
-                      BoxShadow(
-                        color: Color(0x3F787878),
-                        blurRadius: 3.84,
-                        offset: Offset(0.96, 0.96),
-                        spreadRadius: 0,
-                      ),
-                    ],
+                  margin: EdgeInsets.symmetric(horizontal: 10),
+                  child: SvgPicture.asset(
+                    'assets/icons/arrow.svg',
+                    width: 16,
+                    height: 16,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '부산역',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFF374151),
-                          fontSize: 20,
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w500,
-                          height: 1.29,
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.symmetric(horizontal: 10),
-                        child: SvgPicture.asset(
-                          'assets/icons/arrow.svg',
-                          width: 16,
-                          height: 16,
-                        ),
-                      ),
-                      Text(
-                        '서면교차로',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: const Color(0xFF374151),
-                          fontSize: 20,
-                          fontFamily: 'Pretendard',
-                          fontWeight: FontWeight.w500,
-                          height: 1.29,
-                        ),
-                      ),
-                    ],
+                ),
+                Text(
+                  '서면교차로',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF374151),
+                    fontSize: 20,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                    height: 1.29,
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            bottom: 200,
-            left: 0,
-            child: Row(
-              children: [
-                RouteName(routeName: '쉬운 길 추천'),
-                RouteName(routeName: '내비 추천'),
-                RouteName(routeName: '큰길 우선'),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            child: Container(
-              width: MediaQuery.sizeOf(context).width,
-              height: 270,
-              decoration: ShapeDecoration(
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(23.06),
-                    topRight: Radius.circular(23.06),
-                  ),
-                ),
-              ),
             ),
           ),
         ],
@@ -155,14 +131,269 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     );
   }
 
+  Widget _buildBottomContainer() {
+    if (_routeResponse == null) return SizedBox.shrink();
+
+    final selectedRoute = _routeResponse!.routes.firstWhere(
+      (route) => route.option == _selectedOption,
+      orElse: () => _routeResponse!.routes.first,
+    );
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        decoration: ShapeDecoration(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(23.06),
+              topRight: Radius.circular(23.06),
+            ),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 경로 옵션 탭
+            Container(
+              height: 60,
+              child: Row(
+                children: RouteOption.values.map((option) {
+                  final isSelected = option == _selectedOption;
+                  final optionColor = _routeColors[option]!;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectRouteOption(option),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? optionColor.withOpacity(0.1)
+                              : Colors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(
+                              option == RouteOption.easy ? 23.06 : 0,
+                            ),
+                            topRight: Radius.circular(
+                              option == RouteOption.wide ? 23.06 : 0,
+                            ),
+                          ),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isSelected
+                                  ? optionColor
+                                  : Color(0xFFE5E7EB),
+                              width: isSelected ? 3 : 1,
+                            ),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            option.displayName,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: isSelected
+                                  ? optionColor
+                                  : Color(0xFF6B7280),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            // 선택된 경로 정보
+            Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 시간과 거리, 안내시작 버튼
+                  Row(
+                    children: [
+                      Text(
+                        '${selectedRoute.duration}분',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111827),
+                          height: 1.0,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        '${selectedRoute.distance.toStringAsFixed(0)}km',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                      Spacer(),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _routeColors[_selectedOption]!,
+                          borderRadius: BorderRadius.circular(25),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SvgPicture.asset(
+                              'assets/icons/start_navi.svg',
+                              width: 30,
+                              height: 30,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              '안내시작',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 24),
+                  // 경로 특성 태그
+                  Row(
+                    children: [
+                      _buildRouteTag(
+                        '완만함',
+                        selectedRoute.steepRoads <= 1,
+                        _routeColors[_selectedOption]!,
+                      ),
+                      SizedBox(width: 8),
+                      _buildRouteTag(
+                        '넓은 도로폭',
+                        selectedRoute.option == RouteOption.wide,
+                        _routeColors[_selectedOption]!,
+                      ),
+                      SizedBox(width: 8),
+                      _buildRouteTag(
+                        '낮은 경사',
+                        selectedRoute.steepRoads == 0,
+                        _routeColors[_selectedOption]!,
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 24),
+                  // 상세 통계
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildStatItem(
+                        '차선 변경',
+                        '${selectedRoute.laneChanges}회',
+                        _routeColors[_selectedOption]!,
+                      ),
+                      _buildStatItem(
+                        'U턴/비보호',
+                        selectedRoute.hasUturn ? '있음' : '없음',
+                        _routeColors[_selectedOption]!,
+                      ),
+                      _buildStatItem(
+                        '급경사',
+                        '${selectedRoute.steepRoads}회',
+                        _routeColors[_selectedOption]!,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteTag(String label, bool isHighlighted, Color routeColor) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: isHighlighted ? routeColor.withOpacity(0.1) : Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isHighlighted ? routeColor : Color(0xFFE5E7EB),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: isHighlighted ? routeColor : Color(0xFF6B7280),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color routeColor) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Color(0xFF9CA3AF),
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            color: routeColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _selectRouteOption(RouteOption option) {
+    setState(() {
+      _selectedOption = option;
+    });
+    // 지도 다시 그리기
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _drawAllRoutes();
+    });
+  }
+
   Widget _buildMap() {
-    // 경로의 중심점 계산
+    if (_routeResponse == null || _routeResponse!.routes.isEmpty) {
+      return const Center(child: Text('경로 데이터가 없습니다.'));
+    }
+
+    // 첫 번째 경로의 중심점으로 지도 초기화
+    final firstRoute = _routeResponse!.routes.first;
+    if (firstRoute.pathPoints.isEmpty) {
+      return const Center(child: Text('경로 좌표가 없습니다.'));
+    }
+
     final centerLat =
-        _routePoints.map((p) => p.latitude).reduce((a, b) => a + b) /
-        _routePoints.length;
+        firstRoute.pathPoints.map((p) => p[1]).reduce((a, b) => a + b) /
+        firstRoute.pathPoints.length;
     final centerLng =
-        _routePoints.map((p) => p.longitude).reduce((a, b) => a + b) /
-        _routePoints.length;
+        firstRoute.pathPoints.map((p) => p[0]).reduce((a, b) => a + b) /
+        firstRoute.pathPoints.length;
 
     return KakaoMap(
       option: KakaoMapOption(
@@ -172,203 +403,175 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
       ),
       onMapReady: (controller) {
         _mapController = controller;
-        _drawRoute();
-        // 지도가 완전히 로드된 후 카메라 조정
-        Future.delayed(const Duration(milliseconds: 300), () {
-          _adjustCamera();
-        });
+        _drawAllRoutes();
+        _adjustCamera();
       },
     );
   }
 
-  void _drawRoute() {
-    if (_mapController == null || _routePoints.isEmpty) return;
+  void _drawAllRoutes() {
+    if (_mapController == null || _routeResponse == null) return;
 
-    // 경로 그리기
-    _mapController!.routeLayer.addRoute(
-      _routePoints,
-      RouteStyle(
-        const Color(0xFFFF9E2B), // 경로 색상
-        12.0, // 경로 굵기
-        strokeColor: Color(0xFFFFFFFF),
-        strokeWidth: 4,
-      ),
+    // 먼저 비활성화된 경로들을 그리기 (아래 레이어)
+    for (final route in _routeResponse!.routes) {
+      if (route.option != _selectedOption) {
+        final routePoints = route.pathPoints
+            .map((point) => LatLng(point[1], point[0]))
+            .toList();
+
+        if (routePoints.isNotEmpty) {
+          _mapController!.routeLayer.addRoute(
+            routePoints,
+            RouteStyle(
+              _inactiveRouteColor,
+              8.0,
+              strokeColor: Colors.white,
+              strokeWidth: 2,
+            ),
+          );
+        }
+      }
+    }
+
+    // 그 다음 활성화된 경로를 그리기 (위 레이어)
+    final selectedRoute = _routeResponse!.routes.firstWhere(
+      (route) => route.option == _selectedOption,
+      orElse: () => _routeResponse!.routes.first,
     );
 
-    // 시작점 POI 추가
-    _mapController!.labelLayer.addPoi(
-      _routePoints.first,
-      style: PoiStyle(
-        icon: KImage.fromAsset("assets/icons/my_location.png", 30, 30),
-      ),
-    );
+    final selectedRoutePoints = selectedRoute.pathPoints
+        .map((point) => LatLng(point[1], point[0]))
+        .toList();
 
-    // 도착점 POI 추가
-    _mapController!.labelLayer.addPoi(
-      _routePoints.last,
-      style: PoiStyle(icon: KImage.fromAsset("assets/icons/pin.png", 21, 28)),
-    );
+    if (selectedRoutePoints.isNotEmpty) {
+      _mapController!.routeLayer.addRoute(
+        selectedRoutePoints,
+        RouteStyle(
+          _routeColors[_selectedOption]!,
+          12.0,
+          strokeColor: Colors.white,
+          strokeWidth: 4,
+        ),
+      );
+
+      // 시작점과 도착점 POI 추가
+      final startPoint = LatLng(
+        selectedRoute.pathPoints.first[1],
+        selectedRoute.pathPoints.first[0],
+      );
+      final endPoint = LatLng(
+        selectedRoute.pathPoints.last[1],
+        selectedRoute.pathPoints.last[0],
+      );
+
+      // 시작점 POI
+      _mapController!.labelLayer.addPoi(
+        startPoint,
+        style: PoiStyle(
+          icon: KImage.fromAsset('assets/icons/my_location.png', 30, 30),
+        ),
+      );
+
+      // 도착점 POI
+      _mapController!.labelLayer.addPoi(
+        endPoint,
+        style: PoiStyle(icon: KImage.fromAsset('assets/icons/pin.png', 21, 28)),
+      );
+    }
   }
 
   void _adjustCamera() {
-    if (_mapController == null || _routePoints.isEmpty) return;
+    if (_mapController == null || _routeResponse == null) return;
 
-    // 경로의 경계 계산 (모든 경로 포인트를 고려)
-    double minLat = _routePoints.first.latitude;
-    double maxLat = _routePoints.first.latitude;
-    double minLng = _routePoints.first.longitude;
-    double maxLng = _routePoints.first.longitude;
+    // 모든 경로 포인트를 고려하여 경계 계산
+    final allPoints = <LatLng>[];
+    for (final route in _routeResponse!.routes) {
+      allPoints.addAll(
+        route.pathPoints.map((point) => LatLng(point[1], point[0])),
+      );
+    }
 
-    for (final point in _routePoints) {
+    if (allPoints.isEmpty) return;
+
+    double minLat = allPoints.first.latitude;
+    double maxLat = allPoints.first.latitude;
+    double minLng = allPoints.first.longitude;
+    double maxLng = allPoints.first.longitude;
+
+    for (final point in allPoints) {
       if (point.latitude < minLat) minLat = point.latitude;
       if (point.latitude > maxLat) maxLat = point.latitude;
       if (point.longitude < minLng) minLng = point.longitude;
       if (point.longitude > maxLng) maxLng = point.longitude;
     }
 
-    // 경계에 적절한 여백 추가 (위도/경도 기준)
+    // 경계에 여백 추가
     final latRange = maxLat - minLat;
     final lngRange = maxLng - minLng;
 
-    // 여백을 위도/경도 단위로 계산
-    // 최소 여백 설정 (너무 작은 경로를 위해)
-    double latPadding = latRange * 0.25; // 25% 여백
-    double lngPadding = lngRange * 0.25; // 25% 여백
+    double latPadding = latRange * 0.25;
+    double lngPadding = lngRange * 0.25;
 
-    // 최소 여백 보장 (약 200m 정도)
-    const minPaddingDegrees = 0.002; // 대략 200m
+    const minPaddingDegrees = 0.002;
     if (latPadding < minPaddingDegrees) latPadding = minPaddingDegrees;
     if (lngPadding < minPaddingDegrees) lngPadding = minPaddingDegrees;
 
-    // 최대 여백 제한 (너무 큰 여백 방지)
-    const maxPaddingDegrees = 0.01; // 대략 1km
+    const maxPaddingDegrees = 0.01;
     if (latPadding > maxPaddingDegrees) latPadding = maxPaddingDegrees;
     if (lngPadding > maxPaddingDegrees) lngPadding = maxPaddingDegrees;
 
-    // 여백을 포함한 최종 범위
     final finalMinLat = minLat - latPadding;
     final finalMaxLat = maxLat + latPadding;
     final finalMinLng = minLng - lngPadding;
     final finalMaxLng = maxLng + lngPadding;
 
-    // 최종 범위 계산
     final totalLatRange = finalMaxLat - finalMinLat;
     final totalLngRange = finalMaxLng - finalMinLng;
 
-    // 중심점
     final finalCenterLat = (finalMinLat + finalMaxLat) / 2;
     final finalCenterLng = (finalMinLng + finalMaxLng) / 2;
 
-    // 줌 레벨을 범위에 따라 계산 (더 보수적으로)
-    // 위도/경도 단위를 고려한 실용적 접근
     final maxDimension = totalLatRange > totalLngRange
         ? totalLatRange
         : totalLngRange;
 
     int zoomLevel;
     if (maxDimension > 4.0) {
-      // 극대 범위 (~450km+) - 한반도 전체
       zoomLevel = 5;
     } else if (maxDimension > 2.0) {
-      // 매우 매우 큰 범위 (~220km) - 서울-부산급
       zoomLevel = 6;
     } else if (maxDimension > 1.0) {
-      // 대형 범위 (~110km) - 서울-대전급
       zoomLevel = 7;
     } else if (maxDimension > 0.5) {
-      // 큰 범위 (~55km) - 수도권 전체급
       zoomLevel = 8;
     } else if (maxDimension > 0.2) {
-      // 매우 큰 범위 (~22km) - 서울시 전체급
       zoomLevel = 9;
     } else if (maxDimension > 0.15) {
-      // 큰 범위 (~17km)
       zoomLevel = 10;
     } else if (maxDimension > 0.1) {
-      // 중큰 범위 (~11km)
       zoomLevel = 11;
     } else if (maxDimension > 0.08) {
-      // 꽤 큰 범위 (~9km)
       zoomLevel = 12;
     } else if (maxDimension > 0.04) {
-      // 중간 큰 범위 (~4.5km)
       zoomLevel = 13;
     } else if (maxDimension > 0.02) {
-      // 중간 범위 (~2.2km)
       zoomLevel = 14;
     } else if (maxDimension > 0.01) {
-      // 보통 범위 (~1.1km)
       zoomLevel = 15;
     } else if (maxDimension > 0.006) {
-      // 작은 범위 (~650m)
       zoomLevel = 16;
     } else if (maxDimension > 0.003) {
-      // 매우 작은 범위 (~330m)
       zoomLevel = 17;
     } else {
-      // 극히 작은 범위 (~330m 미만)
       zoomLevel = 18;
     }
 
-    print('=== 카메라 조정 정보 ===');
-    print(
-      '경로 범위: 위도 ${latRange.toStringAsFixed(6)}, 경도 ${lngRange.toStringAsFixed(6)}',
-    );
-    print(
-      '여백: 위도 ${latPadding.toStringAsFixed(6)}, 경도 ${lngPadding.toStringAsFixed(6)}',
-    );
-    print(
-      '최종 범위: 위도 ${totalLatRange.toStringAsFixed(6)}, 경도 ${totalLngRange.toStringAsFixed(6)}',
-    );
-    print('최대 차원: ${maxDimension.toStringAsFixed(6)}');
-    print(
-      '중심점: (${finalCenterLat.toStringAsFixed(6)}, ${finalCenterLng.toStringAsFixed(6)})',
-    );
-    print('줌 레벨: $zoomLevel');
-
-    // 카메라 이동
     _mapController!.moveCamera(
       CameraUpdate.newCenterPosition(LatLng(finalCenterLat, finalCenterLng)),
     );
 
-    // 줌 레벨 조정
     Future.delayed(const Duration(milliseconds: 300), () {
       _mapController?.moveCamera(CameraUpdate.zoomTo(zoomLevel));
     });
-  }
-}
-
-class RouteName extends StatelessWidget {
-  const RouteName({super.key, required this.routeName});
-  final String routeName;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.sizeOf(context).width / 3,
-      height: 140,
-      decoration: ShapeDecoration(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(12),
-            topRight: Radius.circular(12),
-          ),
-        ),
-      ),
-      child: Column(
-        children: [
-          SizedBox(height: 24),
-          Text(
-            routeName,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFFF792B),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
