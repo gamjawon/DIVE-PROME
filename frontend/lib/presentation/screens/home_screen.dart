@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/models/place_model.dart';
 import 'package:frontend/models/selected_place.dart';
-import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/presentation/screens/place_search_screen.dart';
 import 'package:frontend/presentation/screens/route_view_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
@@ -552,12 +551,7 @@ class BottomNavigationPanel extends StatelessWidget {
         children: [
           SvgPicture.asset('assets/icons/home.svg', width: 30, height: 30),
           GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => NaviScreen()),
-              );
-            },
+            onTap: () {},
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
               decoration: ShapeDecoration(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/models/route_response_model.dart';
+import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/providers/route_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
@@ -45,6 +46,14 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
             error: (error, stack) => Center(child: Text('오류: $error')),
           ),
           _buildTopBar(),
+          // 하단 여백을 채우는 컨테이너
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 20,
+            child: Container(color: Colors.white),
+          ),
           _buildBottomContainer(),
         ],
       ),
@@ -140,7 +149,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     );
 
     return Positioned(
-      bottom: 0,
+      bottom: 20,
       left: 0,
       right: 0,
       child: Container(
@@ -153,12 +162,13 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
             ),
           ),
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // 경로 옵션 탭
             Container(
-              height: 60,
+              height: 76,
               child: Row(
                 children: RouteOption.values.map((option) {
                   final isSelected = option == _selectedOption;
@@ -179,20 +189,12 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                               option == RouteOption.wide ? 23.06 : 0,
                             ),
                           ),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: isSelected
-                                  ? optionColor
-                                  : Color(0xFFE5E7EB),
-                              width: isSelected ? 3 : 1,
-                            ),
-                          ),
                         ),
                         child: Center(
                           child: Text(
                             option.displayName,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 20,
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.w400,
@@ -210,54 +212,109 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
             ),
             // 선택된 경로 정보
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(32, 16, 32, 36),
+              decoration: BoxDecoration(color: Colors.white),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  SizedBox(height: 8),
                   // 시간과 거리, 안내시작 버튼
                   Row(
                     children: [
-                      Text(
-                        '${selectedRoute.duration}분',
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF111827),
-                          height: 1.0,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        '${selectedRoute.distance.toStringAsFixed(0)}km',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                      Spacer(),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _routeColors[_selectedOption]!,
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            SvgPicture.asset(
-                              'assets/icons/start_navi.svg',
-                              width: 30,
-                              height: 30,
+                            // 시간과 거리
+                            Row(
+                              children: [
+                                Text(
+                                  '${selectedRoute.duration}분',
+                                  style: TextStyle(
+                                    fontSize: 40,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF111827),
+                                    height: 1.0,
+                                  ),
+                                ),
+                                Container(
+                                  margin: EdgeInsets.symmetric(horizontal: 16),
+                                  height: 30,
+                                  decoration: ShapeDecoration(
+                                    shape: RoundedRectangleBorder(
+                                      side: BorderSide(
+                                        width: 1,
+                                        strokeAlign:
+                                            BorderSide.strokeAlignCenter,
+                                        color: const Color(0xFFD1D5DB),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${selectedRoute.distance.toStringAsFixed(0)}km',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w400,
+                                    color: Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ],
                             ),
-                            SizedBox(width: 6),
+                            SizedBox(height: 24),
+                            // 경로 특성 태그
+                            Row(
+                              children: [
+                                _buildRouteTag(
+                                  '완만함',
+                                  selectedRoute.steepRoads <= 1,
+                                ),
+                                SizedBox(width: 8),
+                                _buildRouteTag(
+                                  '넓은 폭',
+                                  selectedRoute.option == RouteOption.wide,
+                                ),
+                                SizedBox(width: 8),
+                                _buildRouteTag(
+                                  '낮은 경사',
+                                  selectedRoute.steepRoads == 0,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => NaviScreen()),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 80,
+                              height: 80,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _routeColors[_selectedOption]!,
+                                borderRadius: BorderRadius.circular(100),
+                              ),
+                              child: SvgPicture.asset(
+                                'assets/icons/start_navi.svg',
+                                width: 30,
+                                height: 30,
+                              ),
+                            ),
+                            SizedBox(height: 8),
                             Text(
                               '안내시작',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: _routeColors[_selectedOption]!,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -267,30 +324,12 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 24),
-                  // 경로 특성 태그
-                  Row(
-                    children: [
-                      _buildRouteTag(
-                        '완만함',
-                        selectedRoute.steepRoads <= 1,
-                        _routeColors[_selectedOption]!,
-                      ),
-                      SizedBox(width: 8),
-                      _buildRouteTag(
-                        '넓은 도로폭',
-                        selectedRoute.option == RouteOption.wide,
-                        _routeColors[_selectedOption]!,
-                      ),
-                      SizedBox(width: 8),
-                      _buildRouteTag(
-                        '낮은 경사',
-                        selectedRoute.steepRoads == 0,
-                        _routeColors[_selectedOption]!,
-                      ),
-                    ],
+                  Container(
+                    margin: EdgeInsets.symmetric(vertical: 32),
+                    width: MediaQuery.sizeOf(context).width - 32,
+                    height: 1,
+                    color: const Color(0xFFC9C9C9),
                   ),
-                  SizedBox(height: 24),
                   // 상세 통계
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -301,12 +340,12 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                         _routeColors[_selectedOption]!,
                       ),
                       _buildStatItem(
-                        'U턴/비보호',
+                        'U턴 횟수',
                         selectedRoute.hasUturn ? '있음' : '없음',
                         _routeColors[_selectedOption]!,
                       ),
                       _buildStatItem(
-                        '급경사',
+                        '급경사 횟수',
                         '${selectedRoute.steepRoads}회',
                         _routeColors[_selectedOption]!,
                       ),
@@ -321,23 +360,20 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     );
   }
 
-  Widget _buildRouteTag(String label, bool isHighlighted, Color routeColor) {
+  Widget _buildRouteTag(String label, bool isHighlighted) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isHighlighted ? routeColor.withOpacity(0.1) : Color(0xFFF9FAFB),
+        color: Color(0xFFEFEFF0),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isHighlighted ? routeColor : Color(0xFFE5E7EB),
-          width: 1,
-        ),
+        border: Border.all(color: Color(0xFFD1D5DB), width: 1),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 16,
           fontWeight: FontWeight.w500,
-          color: isHighlighted ? routeColor : Color(0xFF6B7280),
+          color: Color(0xFF6B7280),
         ),
       ),
     );
@@ -349,16 +385,16 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF9CA3AF),
-            fontWeight: FontWeight.w400,
+            fontSize: 20,
+            color: Colors.black45,
+            fontWeight: FontWeight.w500,
           ),
         ),
         SizedBox(height: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 20,
             color: routeColor,
             fontWeight: FontWeight.w600,
           ),
@@ -424,9 +460,9 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
             routePoints,
             RouteStyle(
               _inactiveRouteColor,
-              8.0,
+              20,
               strokeColor: Colors.white,
-              strokeWidth: 2,
+              strokeWidth: 4,
             ),
           );
         }
@@ -448,7 +484,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
         selectedRoutePoints,
         RouteStyle(
           _routeColors[_selectedOption]!,
-          12.0,
+          20,
           strokeColor: Colors.white,
           strokeWidth: 4,
         ),
@@ -468,14 +504,14 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
       _mapController!.labelLayer.addPoi(
         startPoint,
         style: PoiStyle(
-          icon: KImage.fromAsset('assets/icons/my_location.png', 30, 30),
+          icon: KImage.fromAsset('assets/icons/my_location.png', 40, 40),
         ),
       );
 
       // 도착점 POI
       _mapController!.labelLayer.addPoi(
         endPoint,
-        style: PoiStyle(icon: KImage.fromAsset('assets/icons/pin.png', 21, 28)),
+        style: PoiStyle(icon: KImage.fromAsset('assets/icons/pin.png', 27, 36)),
       );
     }
   }
