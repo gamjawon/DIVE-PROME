@@ -5,6 +5,7 @@ import 'package:frontend/models/place_model.dart';
 import 'package:frontend/models/selected_place.dart';
 import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/presentation/screens/place_search_screen.dart';
+import 'package:frontend/presentation/screens/route_view_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
 import 'package:frontend/providers/route_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
@@ -269,8 +270,22 @@ class _RouteFormState extends ConsumerState<RouteForm> {
           print('마지막 좌표: ${response.pathPoints.last}');
         }
       });
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RouteViewScreen()),
+        );
+      }
     } catch (e) {
-      print('경로 찾기 실패: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('경로를 찾을 수 없습니다: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
