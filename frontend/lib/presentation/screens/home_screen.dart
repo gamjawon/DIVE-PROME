@@ -7,6 +7,7 @@ import 'package:frontend/presentation/screens/place_search_screen.dart';
 import 'package:frontend/presentation/screens/route_view_screen.dart';
 import 'package:frontend/providers/location_provider.dart';
 import 'package:frontend/providers/route_provider.dart';
+import 'package:frontend/providers/place_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -226,6 +227,11 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       _startController.text = _endController.text;
       _endController.text = tempText;
     });
+    
+    // Place provider에도 업데이트
+    ref.read(placeProvider.notifier).setStartPlace(_startPlace);
+    ref.read(placeProvider.notifier).setEndPlace(_endPlace);
+    
     _updateButtonState();
   }
 
@@ -243,6 +249,8 @@ class _RouteFormState extends ConsumerState<RouteForm> {
         _startPlace = SelectedPlace.fromPlace(result);
         _startController.text = _startPlace!.name;
       });
+      // Place provider에도 업데이트
+      ref.read(placeProvider.notifier).setStartPlace(_startPlace);
       _updateButtonState();
     }
   }
@@ -305,6 +313,8 @@ class _RouteFormState extends ConsumerState<RouteForm> {
         _endPlace = SelectedPlace.fromPlace(result);
         _endController.text = _endPlace!.name;
       });
+      // Place provider에도 업데이트
+      ref.read(placeProvider.notifier).setEndPlace(_endPlace);
       _updateButtonState();
     }
   }

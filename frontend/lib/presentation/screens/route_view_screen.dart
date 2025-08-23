@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:frontend/models/route_response_model.dart';
 import 'package:frontend/presentation/screens/navi_screen.dart';
 import 'package:frontend/providers/route_provider.dart';
+import 'package:frontend/providers/place_provider.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class RouteViewScreen extends ConsumerStatefulWidget {
@@ -61,6 +62,10 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
   }
 
   Widget _buildTopBar() {
+    final places = ref.watch(placeProvider);
+    final startPlace = places['start'];
+    final endPlace = places['end'];
+    
     return Positioned(
       top: 70,
       left: 40,
@@ -102,15 +107,19 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  '부산역',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: const Color(0xFF374151),
-                    fontSize: 20,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    height: 1.29,
+                Expanded(
+                  child: Text(
+                    startPlace?.name ?? '출발지',
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: const Color(0xFF374151),
+                      fontSize: 18,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      height: 1.29,
+                    ),
                   ),
                 ),
                 Container(
@@ -121,15 +130,19 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                     height: 16,
                   ),
                 ),
-                Text(
-                  '서면교차로',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: const Color(0xFF374151),
-                    fontSize: 20,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w500,
-                    height: 1.29,
+                Expanded(
+                  child: Text(
+                    endPlace?.name ?? '도착지',
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: const Color(0xFF374151),
+                      fontSize: 18,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w500,
+                      height: 1.29,
+                    ),
                   ),
                 ),
               ],
