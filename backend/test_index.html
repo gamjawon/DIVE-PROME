@@ -2,154 +2,103 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
-  <title>쉬운 길 경로 실험</title>
+  <title>쉬운길/큰길/추천 테스트</title>
   <style>
-    html, body {height:100%;margin:0;padding:0;font-family:system-ui, Arial;}
-    #toolbar {padding:10px;border-bottom:1px solid #eee;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-    #map {width:100%;height:calc(100% - 62px);}
-    input, select, button {padding:8px;border:1px solid #ccc;border-radius:6px;}
-    button {cursor:pointer}
-    .badge {display:inline-block;padding:2px 6px;border-radius:999px;background:#eee;margin-left:6px;font-size:12px}
+    html, body {height:100%; margin:0}
+    #toolbar {padding:10px; display:flex; gap:8px; align-items:center; border-bottom:1px solid #eee}
+    #map {height:calc(100% - 56px)}
+    input, select, button {padding:8px}
   </style>
 </head>
 <body>
   <div id="toolbar">
-    <input id="oLat" type="number" step="0.000001" placeholder="출발 위도 (예: 35.153204)" />
-    <input id="oLng" type="number" step="0.000001" placeholder="출발 경도 (예: 129.118974)" />
-    <input id="dLat" type="number" step="0.000001" placeholder="도착 위도 (예: 35.158503)" />
-    <input id="dLng" type="number" step="0.000001" placeholder="도착 경도 (예: 129.159788)" />
+    <input id="oLat" type="number" step="0.000001" placeholder="출발 위도" value="35.153204" />
+    <input id="oLng" type="number" step="0.000001" placeholder="출발 경도" value="129.118974" />
+    <input id="dLat" type="number" step="0.000001" placeholder="도착 위도" value="35.158503" />
+    <input id="dLng" type="number" step="0.000001" placeholder="도착 경도" value="129.159780" />
     <select id="priority">
-      <option>EASY</option>
-      <option>RECOMMEND</option>
-      <option>TIME</option>
-      <option>DISTANCE</option>
-      <option>MAIN_ROAD</option>
-      <option>NO_TRAFFIC_INFO</option>
+      <option value="EASY">EASY</option>
+      <option value="MAIN_ROAD">MAIN_ROAD</option>
+      <option value="RECOMMEND" selected>RECOMMEND</option>
     </select>
-    <button id="routeBtn">경로 요청</button>
-    <span id="status" class="badge">대기</span>
+    <button id="go">요청</button>
+    <span id="dur"></span>
   </div>
   <div id="map"></div>
 
-  <!-- Kakao SDK: autoload=false 필수 -->
-  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=93c6895072514dd0107099d6773d4933&libraries=services&autoload=false"></script>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=93c6895072514dd0107099d6773d4933&autoload=false"></script>
   <script>
-    kakao.maps.load(function() {
-      // 지도
+    kakao.maps.load(() => {
       const map = new kakao.maps.Map(document.getElementById('map'), {
-        center: new kakao.maps.LatLng(35.1532, 129.1189),
-        level: 5
+        center: new kakao.maps.LatLng(35.1532, 129.1189), level: 5
       });
+      let line = null, markers = [];
 
-      let routeLine = null;
-      let samplingMarkers = [];
-
-      function setStatus(text) {
-        document.getElementById('status').innerText = text;
+      function clearMap(){
+        if(line){line.setMap(null); line=null;}
+        markers.forEach(m=>m.setMap(null)); markers=[];
       }
-
-      function clearMap() {
-        if (routeLine) { routeLine.setMap(null); routeLine = null; }
-        samplingMarkers.forEach(m => m.setMap(null));
-        samplingMarkers = [];
-      }
-
-      // [[lon,lat], ...] → Polyline
-      function drawPolylineLonLat(pathPointsLonLat) {
-        const linePath = pathPointsLonLat.map(([lon, lat]) => new kakao.maps.LatLng(lat, lon));
-        routeLine = new kakao.maps.Polyline({
-          path: linePath, strokeWeight: 5, strokeColor: '#FF0000', strokeOpacity: 0.8, strokeStyle: 'solid'
-        });
-        routeLine.setMap(map);
-        const bounds = new kakao.maps.LatLngBounds();
-        linePath.forEach(p => bounds.extend(p));
-        if (!bounds.isEmpty()) map.setBounds(bounds);
-      }
-
-      // [[lat,lng], ...] → 샘플링 마커
-      function drawSamplingMarkersLatLng(pathLatLng) {
-        const bounds = new kakao.maps.LatLngBounds();
-        pathLatLng.forEach(([lat, lng]) => {
-          const pos = new kakao.maps.LatLng(lat, lng);
-          const marker = new kakao.maps.Marker({ position: pos });
-          marker.setMap(map);
-          samplingMarkers.push(marker);
-          bounds.extend(pos);
-        });
-        if (!bounds.isEmpty()) map.setBounds(bounds);
-      }
-
-      // 카카오 원본 JSON → [[lon,lat], ...]
-      function extractPathPointsFromKakao(kakaoJson) {
-        const routes = kakaoJson?.routes || [];
-        if (!routes.length) return [];
-        const rt = routes[0];
+      function drawFromKakaoFinal(kakao_final){
+        const routes = kakao_final?.routes || [];
+        if(!routes.length) throw new Error('kakao_final.routes empty');
         const pts = [];
-        for (const sec of rt.sections || []) {
-          for (const rd of sec.roads || []) {
+        for(const sec of routes[0].sections || []){
+          for(const rd of sec.roads || []){
             const vx = rd.vertexes || [];
-            for (let i = 0; i + 1 < vx.length; i += 2) {
-              pts.push([Number(vx[i]), Number(vx[i + 1])]); // [lon,lat]
+            for(let i=0;i+1<vx.length;i+=2){
+              pts.push(new kakao.maps.LatLng(vx[i+1], vx[i]));
             }
           }
         }
-        return pts;
+        line = new kakao.maps.Polyline({
+          path: pts, strokeWeight: 5, strokeOpacity: 0.9, strokeColor: '#0066ff'
+        });
+        line.setMap(map);
+        const b = new kakao.maps.LatLngBounds();
+        pts.forEach(p=>b.extend(p));
+        if(!b.isEmpty()) map.setBounds(b);
       }
 
-      document.getElementById('routeBtn').addEventListener('click', async () => {
-        setStatus('요청 준비');
+      document.getElementById('go').onclick = async () => {
         clearMap();
-
         const oLat = parseFloat(document.getElementById('oLat').value);
         const oLng = parseFloat(document.getElementById('oLng').value);
         const dLat = parseFloat(document.getElementById('dLat').value);
         const dLng = parseFloat(document.getElementById('dLng').value);
-        const priority = document.getElementById('priority').value || 'EASY';
+        const priority = document.getElementById('priority').value;
 
-        if (!isFinite(oLat) || !isFinite(oLng) || !isFinite(dLat) || !isFinite(dLng)) {
-          alert('위도/경도를 모두 입력하세요'); return;
-        }
-
-        // 백엔드는 origin.x=경도(lng), origin.y=위도(lat)
         const body = {
-          origin: { x: oLng, y: oLat },
-          destination: { x: dLng, y: dLat },
+          origin: {x:oLng, y:oLat},
+          destination: {x:dLng, y:dLat},
           priority
         };
+        const resp = await fetch('http://localhost:8000/find-path', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+        if(!resp.ok) { alert('HTTP '+resp.status); return; }
+        const data = await resp.json();
 
-        try {
-          setStatus('서버 요청 중…');
-          const resp = await fetch('http://localhost:8000/find-path', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(body)
-          });
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
-          const data = await resp.json();
+        // duration 표시
+        document.getElementById('dur').innerText =
+          `duration: ${Math.round((data.duration_sec||0)/60)} min`;
 
-          // 경로 좌표 결정
-          let pathLonLat = [];
-          if (Array.isArray(data.path_points)) {
-            pathLonLat = data.path_points;               // EASY 응답(우리 포맷)
-          } else {
-            pathLonLat = extractPathPointsFromKakao(data); // 비-EASY: 카카오 원본 파싱
-          }
-          if (!pathLonLat.length) throw new Error('경로 좌표 없음');
-
-          drawPolylineLonLat(pathLonLat);
-
-          // EASY면 30 포인트 샘플링 마커 확인
-          if (priority === 'EASY' && data.sampling?.routes?.EASY_PATH?.path_point_30?.length) {
-            drawSamplingMarkersLatLng(data.sampling.routes.EASY_PATH.path_point_30);
-          }
-
-          setStatus('완료');
-        } catch (err) {
-          console.error(err);
-          setStatus('실패');
-          alert('경로 요청 실패: ' + err.message);
+        if(data.kakao_final){
+          drawFromKakaoFinal(data.kakao_final);           // ✅ 항상 Kakao 경로로 그리기
+        }else{
+          // 폴백: path_points로 그리기
+          const pts = (data.path_points||[]).map(([lon,lat])=>new kakao.maps.LatLng(lat, lon));
+          line = new kakao.maps.Polyline({path: pts, strokeWeight:5, strokeColor:'#ff0000'});
+          line.setMap(map);
         }
-      });
+
+        // EASY일 때 샘플링 마커(선택)
+        const easy = data.sampling?.routes?.EASY_PATH?.path_point_30 || [];
+        for(const [lat,lng] of easy){
+          const mk = new kakao.maps.Marker({position: new kakao.maps.LatLng(lat, lng)});
+          mk.setMap(map); markers.push(mk);
+        }
+      };
     });
   </script>
 </body>
