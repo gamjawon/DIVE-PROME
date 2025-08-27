@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/models/place_model.dart';
-import 'package:frontend/providers/location_provider.dart';
-import 'package:frontend/services/kakao_local_service.dart';
+import 'package:frontend/data/datasources/kakao_local_datasource.dart';
+import 'package:frontend/data/models/place_model.dart';
+import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
 
 class PlaceSearchScreen extends ConsumerStatefulWidget {
   final String title;
@@ -21,7 +21,7 @@ class PlaceSearchScreen extends ConsumerStatefulWidget {
 
 class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final KakaoLocalService _kakaoLocalService = KakaoLocalService();
+  final KakaoLocalDatasource _kakaoLocalService = KakaoLocalDatasource();
 
   List<Place> _searchResults = [];
   bool _isLoading = false;

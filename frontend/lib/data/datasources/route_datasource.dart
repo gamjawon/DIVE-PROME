@@ -1,12 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:frontend/data/models/route_model.dart';
 import 'package:http/http.dart' as http;
 
-import '../models/route_request_model.dart';
-import '../models/route_response_model.dart';
-
-class RouteApiService {
+class RouteDatasource {
   // 플랫폼별 로컬 개발 URL
   static String get baseUrl {
     if (Platform.isAndroid) {

@@ -1,8 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/data/models/route_model.dart';
 
-import '../models/route_request_model.dart';
-import '../models/route_response_model.dart';
-import '../services/route_api_service.dart';
+import '../../data/datasources/route_datasource.dart';
 
 class RouteNotifier extends StateNotifier<AsyncValue<RouteResponse?>> {
   RouteNotifier() : super(const AsyncValue.data(null));
@@ -23,7 +22,7 @@ class RouteNotifier extends StateNotifier<AsyncValue<RouteResponse?>> {
         endLng: endLng,
       );
 
-      final response = await RouteApiService.getRoute(request);
+      final response = await RouteDatasource.getRoute(request);
       state = AsyncValue.data(response);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);

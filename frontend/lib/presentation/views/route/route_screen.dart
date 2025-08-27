@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/models/route_response_model.dart';
-import 'package:frontend/presentation/screens/navi_screen.dart';
-import 'package:frontend/providers/route_provider.dart';
-import 'package:frontend/providers/place_provider.dart';
+import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
+import 'package:frontend/presentation/views/navigation/navigation_screen.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
-class RouteViewScreen extends ConsumerStatefulWidget {
-  const RouteViewScreen({super.key});
+class RouteScreen extends ConsumerStatefulWidget {
+  const RouteScreen({super.key});
 
   @override
-  ConsumerState<RouteViewScreen> createState() => _RouteViewScreenState();
+  ConsumerState<RouteScreen> createState() => _RouteViewScreenState();
 }
 
-class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
+class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   KakaoMapController? _mapController;
   RouteOption _selectedOption = RouteOption.easy;
   RouteResponse? _routeResponse;
@@ -65,7 +65,7 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
     final places = ref.watch(placeProvider);
     final startPlace = places['start'];
     final endPlace = places['end'];
-    
+
     return Positioned(
       top: 70,
       left: 40,
@@ -290,7 +290,9 @@ class _RouteViewScreenState extends ConsumerState<RouteViewScreen> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => NaviScreen()),
+                            MaterialPageRoute(
+                              builder: (_) => NavigationScreen(),
+                            ),
                           );
                         },
                         child: Column(

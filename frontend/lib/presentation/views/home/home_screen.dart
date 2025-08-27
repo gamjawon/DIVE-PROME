@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/models/place_model.dart';
-import 'package:frontend/models/selected_place.dart';
-import 'package:frontend/presentation/screens/place_search_screen.dart';
-import 'package:frontend/presentation/screens/route_view_screen.dart';
-import 'package:frontend/providers/location_provider.dart';
-import 'package:frontend/providers/route_provider.dart';
-import 'package:frontend/providers/place_provider.dart';
+import 'package:frontend/data/models/place_model.dart';
+import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
+import 'package:frontend/presentation/views/route/route_screen.dart';
+import 'package:frontend/presentation/views/search/place_search_screen.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -227,11 +226,11 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       _startController.text = _endController.text;
       _endController.text = tempText;
     });
-    
+
     // Place provider에도 업데이트
     ref.read(placeProvider.notifier).setStartPlace(_startPlace);
     ref.read(placeProvider.notifier).setEndPlace(_endPlace);
-    
+
     _updateButtonState();
   }
 
@@ -284,7 +283,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const RouteViewScreen()),
+          MaterialPageRoute(builder: (_) => const RouteScreen()),
         );
       }
     } catch (e) {

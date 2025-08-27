@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/models/location_model.dart';
-import 'package:frontend/services/location_service.dart';
+import 'package:frontend/data/datasources/location_datasource.dart';
+import 'package:frontend/data/models/location_model.dart';
 
 /// 위치 상태 Provider
 final locationNotifierProvider =
-    AsyncNotifierProvider<LocationNotifier, LocationModel?>(
+    AsyncNotifierProvider<LocationNotifier, Location?>(
       () => LocationNotifier(),
     );
 
-class LocationNotifier extends AsyncNotifier<LocationModel?> {
+class LocationNotifier extends AsyncNotifier<Location?> {
   @override
-  Future<LocationModel?> build() async {
+  Future<Location?> build() async {
     return await _fetchCurrentLocation();
   }
 
@@ -22,9 +22,9 @@ class LocationNotifier extends AsyncNotifier<LocationModel?> {
   }
 
   /// 현재 위치 가져오기
-  Future<LocationModel?> _fetchCurrentLocation() async {
+  Future<Location?> _fetchCurrentLocation() async {
     try {
-      final location = await LocationService.getCurrentLocation();
+      final location = await LocationDatasource.getCurrentLocation();
       if (location == null) throw Exception('위치 정보를 가져올 수 없습니다');
       return location;
     } catch (e, st) {

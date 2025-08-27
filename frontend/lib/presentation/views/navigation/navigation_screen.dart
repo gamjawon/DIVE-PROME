@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class NaviScreen extends StatefulWidget {
-  const NaviScreen({super.key});
+class NavigationScreen extends StatefulWidget {
+  const NavigationScreen({super.key});
 
   @override
-  State<NaviScreen> createState() => _NaviScreenState();
+  State<NavigationScreen> createState() => _NavigationScreenState();
 }
 
-class _NaviScreenState extends State<NaviScreen> {
+class _NavigationScreenState extends State<NavigationScreen> {
   bool _isEasyMode = false;
 
   @override

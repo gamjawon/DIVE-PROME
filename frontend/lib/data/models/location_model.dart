@@ -1,9 +1,9 @@
-class LocationModel {
+class Location {
   final double latitude;
   final double longitude;
   final String address;
 
-  const LocationModel({
+  const Location({
     required this.latitude,
     required this.longitude,
     required this.address,

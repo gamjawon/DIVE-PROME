@@ -1,8 +1,8 @@
-import 'package:frontend/models/location_model.dart';
-import 'package:frontend/services/kakao_local_service.dart';
+import 'package:frontend/data/datasources/kakao_local_datasource.dart';
+import 'package:frontend/data/models/location_model.dart';
 import 'package:geolocator/geolocator.dart';
 
-class LocationService {
+class LocationDatasource {
   /// 위치 권한 확인하고 요청
   static Future<bool> checkAndRequestPermission() async {
     // 위치 서비스가 활성화되어 있는지 확인
@@ -29,7 +29,7 @@ class LocationService {
   }
 
   /// 현재 위치 가져오기
-  static Future<LocationModel?> getCurrentLocation() async {
+  static Future<Location?> getCurrentLocation() async {
     try {
       // 권한 확인
       bool hasPermission = await checkAndRequestPermission();
@@ -47,7 +47,7 @@ class LocationService {
         position.longitude,
       );
 
-      return LocationModel(
+      return Location(
         latitude: position.latitude,
         longitude: position.longitude,
         address: address,
@@ -64,7 +64,7 @@ class LocationService {
     double longitude,
   ) async {
     try {
-      final kakaoLocalService = KakaoLocalService();
+      final kakaoLocalService = KakaoLocalDatasource();
       return await kakaoLocalService.getAddressFromCoordinates(
         longitude: longitude,
         latitude: latitude,
