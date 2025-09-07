@@ -1,12 +1,19 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/data/repositories/route_repository_impl.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../data/datasources/route_datasource.dart';
+part 'route_viewmodel.g.dart';
 
-class RouteNotifier extends StateNotifier<AsyncValue<RouteResponse?>> {
-  RouteNotifier() : super(const AsyncValue.data(null));
+@riverpod
+class RouteViewmodel extends _$RouteViewmodel {
+  @override
+  Future<List<RouteInfo>?> build() async {
+    // 초기 상태는 null (경로 데이터 없음)
+    return null;
+  }
 
-  Future<void> getRoute({
+  /// 경로 검색
+  Future<void> searchRoute({
     required double startLat,
     required double startLng,
     required double endLat,
@@ -14,7 +21,7 @@ class RouteNotifier extends StateNotifier<AsyncValue<RouteResponse?>> {
   }) async {
     state = const AsyncValue.loading();
 
-    try {
+    state = await AsyncValue.guard(() async {
       final request = RouteRequest(
         startLat: startLat,
         startLng: startLng,
@@ -22,19 +29,19 @@ class RouteNotifier extends StateNotifier<AsyncValue<RouteResponse?>> {
         endLng: endLng,
       );
 
-      final response = await RouteDatasource.getRoute(request);
-      state = AsyncValue.data(response);
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
-    }
+      return ref.read(routeRepositoryProvider).getRoute(request);
+    });
   }
 
+  /// 경로 데이터 초기화
   void clearRoute() {
     state = const AsyncValue.data(null);
   }
-}
 
-final routeProvider =
-    StateNotifierProvider<RouteNotifier, AsyncValue<RouteResponse?>>((ref) {
-      return RouteNotifier();
+  /// 현재 경로 새로고침
+  Future<void> refresh() async {
+    state = await AsyncValue.guard(() async {
+      return state.value; // 현재 상태 유지하면서 새로고침
     });
+  }
+}

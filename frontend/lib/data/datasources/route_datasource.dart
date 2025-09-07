@@ -1,8 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/route_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'route_datasource.g.dart';
+
+@Riverpod(keepAlive: true)
+RouteDatasource routeDatasource(Ref ref) {
+  return RouteDatasource();
+}
 
 class RouteDatasource {
   // 플랫폼별 로컬 개발 URL
@@ -16,17 +25,17 @@ class RouteDatasource {
     }
   }
 
-  static Future<RouteResponse> getRoute(RouteRequest request) async {
+  Future<List<RouteInfo>> getRoute(RouteRequest request) async {
     final url = '$baseUrl/find-path';
     try {
       print('API 요청 URL: $url');
-      print('API 요청 데이터: ${request.toJson()}');
+      print('API 요청 데이터: ${request.toRequestBody()}');
 
       final response = await http
           .post(
             Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(request.toJson()),
+            body: jsonEncode(request.toRequestBody()),
           )
           .timeout(
             const Duration(seconds: 30), // 30초 타임아웃
@@ -39,7 +48,7 @@ class RouteDatasource {
       if (response.statusCode == 200) {
         print('API 응답 성공: ${response.body.length} bytes');
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return RouteResponse.fromJson(responseData);
+        return parseRoutesFromResponse(responseData);
       } else {
         print('API 응답 실패: ${response.body}');
         throw Exception(
@@ -51,12 +60,12 @@ class RouteDatasource {
       print('사용 중인 URL: $url');
       print('플랫폼: ${Platform.operatingSystem}');
       // API 실패 시 더미 데이터 반환
-      return _getDummyRouteResponse();
+      return _getDummyRoutes();
     }
   }
 
   // API 실패 시 사용할 더미 데이터
-  static RouteResponse _getDummyRouteResponse() {
+  List<RouteInfo> _getDummyRoutes() {
     // 부산 지역 더미 경로 데이터
     final dummyPathPoints = [
       [129.0756, 35.1171], // 부산역
@@ -75,45 +84,38 @@ class RouteDatasource {
       [129.0720, 35.1240], // 서면교차로 인근
     ];
 
-    return RouteResponse(
-      routes: {
-        'EASY': RouteInfo(
-          label: 'EASY',
-          pathPoints: dummyPathPoints,
-          displayPathPoints: dummyDisplayPoints,
-          distanceM: 2200.0,
-          durationSec: 1800, // 30분
-          laneChanges: 3,
-          uTurns: 0,
-        ),
-        'RECOMMEND': RouteInfo(
-          label: 'RECOMMEND',
-          pathPoints: _createVariantRoute(dummyPathPoints, 1),
-          displayPathPoints: dummyDisplayPoints,
-          distanceM: 2050.0,
-          durationSec: 1680, // 28분
-          laneChanges: 4,
-          uTurns: 1,
-        ),
-        'MAIN_ROAD': RouteInfo(
-          label: 'MAIN_ROAD',
-          pathPoints: _createVariantRoute(dummyPathPoints, 2),
-          displayPathPoints: dummyDisplayPoints,
-          distanceM: 1980.0,
-          durationSec: 1500, // 25분
-          laneChanges: 6,
-          uTurns: 0,
-        ),
-      },
-      requestEcho: {
-        'origin': {'x': 129.0756, 'y': 35.1171},
-        'destination': {'x': 129.0720, 'y': 35.1240},
-      },
-      elapsedMs: 250.0,
-    );
+    return [
+      RouteInfo(
+        label: 'EASY',
+        pathPoints: dummyPathPoints,
+        displayPathPoints: dummyDisplayPoints,
+        distanceM: 2200.0,
+        durationSec: 1800, // 30분
+        laneChanges: 3,
+        uTurns: 0,
+      ),
+      RouteInfo(
+        label: 'RECOMMEND',
+        pathPoints: _createVariantRoute(dummyPathPoints, 1),
+        displayPathPoints: dummyDisplayPoints,
+        distanceM: 2050.0,
+        durationSec: 1680, // 28분
+        laneChanges: 4,
+        uTurns: 1,
+      ),
+      RouteInfo(
+        label: 'MAIN_ROAD',
+        pathPoints: _createVariantRoute(dummyPathPoints, 2),
+        displayPathPoints: dummyDisplayPoints,
+        distanceM: 1980.0,
+        durationSec: 1500, // 25분
+        laneChanges: 6,
+        uTurns: 0,
+      ),
+    ];
   }
 
-  static List<List<double>> _createVariantRoute(
+  List<List<double>> _createVariantRoute(
     List<List<double>> baseRoute,
     int variant,
   ) {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/data/datasources/kakao_local_datasource.dart';
-import 'package:frontend/data/models/place_model.dart';
+import 'package:frontend/data/models/location_model.dart';
 import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
 
 class PlaceSearchScreen extends ConsumerStatefulWidget {
   final String title;
@@ -21,11 +21,6 @@ class PlaceSearchScreen extends ConsumerStatefulWidget {
 
 class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final KakaoLocalDatasource _kakaoLocalService = KakaoLocalDatasource();
-
-  List<Place> _searchResults = [];
-  bool _isLoading = false;
-  String _errorMessage = '';
 
   @override
   void dispose() {
@@ -33,50 +28,25 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
     super.dispose();
   }
 
-  void _searchPlaces(String query) async {
-    if (query.trim().isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _errorMessage = '';
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      final response = await _kakaoLocalService.searchPlaces(query: query);
-      setState(() {
-        _searchResults = response.documents;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = '검색 중 오류가 발생했습니다.';
-        _searchResults = [];
-      });
-    }
+  void _searchPlaces(String query) {
+    ref.read(placeSearchViewmodelProvider.notifier).searchPlaces(query);
   }
 
-  void _selectPlace(Place place) {
+  void _selectPlace(Location place) {
     Navigator.pop(context, place);
+    print(place);
   }
 
   void _selectCurrentLocation() {
-    final locationState = ref.read(locationNotifierProvider);
+    final locationState = ref.read(locationViewmodelProvider);
     locationState.whenData((location) {
       if (location != null) {
-        final currentLocationPlace = Place(
-          id: 'current_location',
+        final currentLocationPlace = Location(
           placeName: '현재 위치',
-          addressName: location.address,
-          roadAddressName: location.address,
-          x: location.longitude,
-          y: location.latitude,
+          addressName: location.addressName,
+          roadAddressName: location.roadAddressName,
+          longitude: location.longitude,
+          latitude: location.latitude,
           categoryName: '현재위치',
         );
         Navigator.pop(context, currentLocationPlace);
@@ -196,14 +166,75 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    if (_isLoading) {
-      return Center(child: CircularProgressIndicator(color: Color(0xFFFF5930)));
-    }
+    final placeSearchState = ref.watch(placeSearchViewmodelProvider);
+    final searchState = placeSearchState.searchResults;
 
-    if (_errorMessage.isNotEmpty) {
-      return Center(
+    return searchState.when(
+      data: (searchResults) {
+        if (_searchController.text.trim().isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SvgPicture.asset(
+                  'assets/icons/pin.svg',
+                  width: 64,
+                  height: 64,
+                  colorFilter: ColorFilter.mode(
+                    Color(0xFFD7D7D7),
+                    BlendMode.srcIn,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  '목적지를 검색해보세요',
+                  style: TextStyle(
+                    color: Color(0xFFD7D7D7),
+                    fontSize: 16,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (searchResults.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 64, color: Color(0xFFD7D7D7)),
+                SizedBox(height: 16),
+                Text(
+                  '검색 결과가 없습니다',
+                  style: TextStyle(
+                    color: Color(0xFFD7D7D7),
+                    fontSize: 16,
+                    fontFamily: 'Pretendard',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: searchResults.length,
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          itemBuilder: (context, index) {
+            final place = searchResults[index];
+            return _buildPlaceItem(place);
+          },
+        );
+      },
+      loading: () =>
+          Center(child: CircularProgressIndicator(color: Color(0xFFFF5930))),
+      error: (error, _) => Center(
         child: Text(
-          _errorMessage,
+          '검색 중 오류가 발생했습니다: ${error.toString()}',
           style: TextStyle(
             color: Colors.red,
             fontSize: 16,
@@ -211,97 +242,68 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
             fontWeight: FontWeight.w500,
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    if (_searchController.text.trim().isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildPlaceItem(Location place) {
+    return InkWell(
+      onTap: () => _selectPlace(place),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        margin: EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Color(0xFFE5E5E5)),
+        ),
+        child: Row(
           children: [
-            Icon(Icons.search, size: 64, color: Color(0xFF9CA3AF)),
-            SizedBox(height: 16),
-            Text(
-              '장소를 검색해보세요',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 16,
-                fontFamily: 'Pretendard',
-                fontWeight: FontWeight.w500,
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.location_on,
+                color: Color(0xFFFF5930),
+                size: 20,
+              ),
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    place.placeName,
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (place.addressName.isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      place.addressName,
+                      style: TextStyle(
+                        color: Color(0xFF666666),
+                        fontSize: 14,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
         ),
-      );
-    }
-
-    if (_searchResults.isEmpty) {
-      return Center(
-        child: Text(
-          '검색 결과가 없습니다',
-          style: TextStyle(
-            color: Color(0xFF9CA3AF),
-            fontSize: 16,
-            fontFamily: 'Pretendard',
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _searchResults.length,
-      separatorBuilder: (context, index) =>
-          Divider(height: 1, color: Color(0xFFF0F0F0)),
-      itemBuilder: (context, index) {
-        final place = _searchResults[index];
-        return ListTile(
-          contentPadding: EdgeInsets.symmetric(vertical: 8),
-          onTap: () => _selectPlace(place),
-          title: Text(
-            place.placeName,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontFamily: 'Pretendard',
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (place.categoryName.isNotEmpty) ...[
-                SizedBox(height: 4),
-                Text(
-                  place.categoryName,
-                  style: TextStyle(
-                    color: Color(0xFF9CA3AF),
-                    fontSize: 12,
-                    fontFamily: 'Pretendard',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-              SizedBox(height: 4),
-              Text(
-                place.displayAddress,
-                style: TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 14,
-                  fontFamily: 'Pretendard',
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-          trailing: Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: Color(0xFF9CA3AF),
-          ),
-        );
-      },
+      ),
     );
   }
 }

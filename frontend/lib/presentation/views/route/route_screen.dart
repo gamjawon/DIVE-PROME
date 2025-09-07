@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/data/models/route_model.dart';
 import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_state_viewmodel.dart';
 import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:frontend/presentation/views/navigation/navigation_screen.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
@@ -16,8 +17,6 @@ class RouteScreen extends ConsumerStatefulWidget {
 
 class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   KakaoMapController? _mapController;
-  RouteOption _selectedOption = RouteOption.easy;
-  RouteResponse? _routeResponse;
 
   // 경로별 색상 정의
   static const Map<RouteOption, Color> _routeColors = {
@@ -29,18 +28,24 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final routeState = ref.watch(routeProvider);
+    final routeState = ref.watch(routeViewmodelProvider);
 
     return Scaffold(
       body: Stack(
         children: [
           routeState.when(
-            data: (routeResponse) {
-              if (routeResponse == null || routeResponse.routes.isEmpty) {
+            data: (routeList) {
+              if (routeList == null || routeList.isEmpty) {
                 return const Center(child: Text('경로 데이터가 없습니다.'));
               }
 
-              _routeResponse = routeResponse;
+              // ViewModel에 경로 데이터 설정
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ref
+                    .read(routeStateViewmodelProvider.notifier)
+                    .setRouteList(routeList);
+              });
+
               return _buildMap();
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -62,9 +67,9 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   Widget _buildTopBar() {
-    final places = ref.watch(placeProvider);
-    final startPlace = places['start'];
-    final endPlace = places['end'];
+    final places = ref.watch(placeSearchViewmodelProvider);
+    final startPlace = places.startPlace;
+    final endPlace = places.endPlace;
 
     return Positioned(
       top: 70,
@@ -109,7 +114,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
               children: [
                 Expanded(
                   child: Text(
-                    startPlace?.name ?? '출발지',
+                    startPlace?.placeName ?? '출발지',
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
@@ -132,7 +137,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
                 ),
                 Expanded(
                   child: Text(
-                    endPlace?.name ?? '도착지',
+                    endPlace?.placeName ?? '도착지',
                     textAlign: TextAlign.center,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
@@ -154,14 +159,15 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   Widget _buildBottomContainer() {
-    if (_routeResponse == null) return SizedBox.shrink();
+    final routeState = ref.watch(routeStateViewmodelProvider);
+    if (routeState.routeList == null) return SizedBox.shrink();
 
     // routes는 이제 Map<String, RouteInfo> 형태입니다
-    final routeList = _routeResponse!.routeList;
+    final routeList = routeState.routeList!;
     if (routeList.isEmpty) return SizedBox.shrink();
 
     final selectedRoute = routeList.firstWhere(
-      (route) => route.option == _selectedOption,
+      (route) => route.option == routeState.selectedOption,
       orElse: () => routeList.first,
     );
 
@@ -188,7 +194,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
               height: 76,
               child: Row(
                 children: RouteOption.values.map((option) {
-                  final isSelected = option == _selectedOption;
+                  final isSelected = option == routeState.selectedOption;
                   final optionColor = _routeColors[option]!;
                   return Expanded(
                     child: GestureDetector(
@@ -305,7 +311,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
-                                color: _routeColors[_selectedOption]!,
+                                color: _routeColors[routeState.selectedOption]!,
                                 borderRadius: BorderRadius.circular(100),
                               ),
                               child: SvgPicture.asset(
@@ -318,7 +324,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
                             Text(
                               '안내시작',
                               style: TextStyle(
-                                color: _routeColors[_selectedOption]!,
+                                color: _routeColors[routeState.selectedOption]!,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -341,17 +347,17 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
                       _buildStatItem(
                         '차선 변경',
                         '${selectedRoute.laneChanges}회',
-                        _routeColors[_selectedOption]!,
+                        _routeColors[routeState.selectedOption]!,
                       ),
                       _buildStatItem(
                         'U턴 횟수',
                         '${selectedRoute.uTurns}회',
-                        _routeColors[_selectedOption]!,
+                        _routeColors[routeState.selectedOption]!,
                       ),
                       _buildStatItem(
                         '급경사로 수',
                         '1회',
-                        _routeColors[_selectedOption]!,
+                        _routeColors[routeState.selectedOption]!,
                       ),
                     ],
                   ),
@@ -434,9 +440,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   void _selectRouteOption(RouteOption option) {
-    setState(() {
-      _selectedOption = option;
-    });
+    ref.read(routeStateViewmodelProvider.notifier).setSelectedOption(option);
     // 지도 다시 그리기
     Future.delayed(const Duration(milliseconds: 100), () {
       _drawAllRoutes();
@@ -444,12 +448,13 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   Widget _buildMap() {
-    if (_routeResponse == null || _routeResponse!.routes.isEmpty) {
+    final routeState = ref.read(routeStateViewmodelProvider);
+    if (routeState.routeList == null || routeState.routeList!.isEmpty) {
       return const Center(child: Text('경로 데이터가 없습니다.'));
     }
 
     // 첫 번째 경로의 중심점으로 지도 초기화
-    final routeList = _routeResponse!.routeList;
+    final routeList = routeState.routeList!;
     final firstRoute = routeList.first;
     if (firstRoute.pathPoints.isEmpty) {
       return const Center(child: Text('경로 좌표가 없습니다.'));
@@ -477,13 +482,14 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   void _drawAllRoutes() {
-    if (_mapController == null || _routeResponse == null) return;
+    final routeState = ref.read(routeStateViewmodelProvider);
+    if (_mapController == null || routeState.routeList == null) return;
 
-    final routeList = _routeResponse!.routeList;
+    final routeList = routeState.routeList!;
 
     // 먼저 비활성화된 경로들을 그리기 (아래 레이어)
     for (final route in routeList) {
-      if (route.option != _selectedOption) {
+      if (route.option != routeState.selectedOption) {
         final routePoints = route.pathPoints
             .map((point) => LatLng(point[1], point[0]))
             .toList();
@@ -504,7 +510,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
 
     // 그 다음 활성화된 경로를 그리기 (위 레이어)
     final selectedRoute = routeList.firstWhere(
-      (route) => route.option == _selectedOption,
+      (route) => route.option == routeState.selectedOption,
       orElse: () => routeList.first,
     );
 
@@ -516,7 +522,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
       _mapController!.routeLayer.addRoute(
         selectedRoutePoints,
         RouteStyle(
-          _routeColors[_selectedOption]!,
+          _routeColors[routeState.selectedOption]!,
           20,
           strokeColor: Colors.white,
           strokeWidth: 4,
@@ -550,9 +556,10 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
   }
 
   void _adjustCamera() {
-    if (_mapController == null || _routeResponse == null) return;
+    final routeState = ref.read(routeStateViewmodelProvider);
+    if (_mapController == null || routeState.routeList == null) return;
 
-    final routeList = _routeResponse!.routeList;
+    final routeList = routeState.routeList!;
 
     // 모든 경로 포인트를 고려하여 경계 계산
     final allPoints = <LatLng>[];

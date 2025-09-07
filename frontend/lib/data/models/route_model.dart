@@ -1,3 +1,8 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'route_model.freezed.dart';
+part 'route_model.g.dart';
+
 enum RouteOption {
   easy('EASY', '쉬운 길 추천'),
   recommend('RECOMMEND', '내비 추천'),
@@ -8,24 +13,24 @@ enum RouteOption {
   final String displayName;
 }
 
-class RouteInfo {
-  final String label;
-  final List<List<double>> pathPoints; // [lon, lat] 형식
-  final List<List<double>> displayPathPoints; // 시각화용 간소화된 경로
-  final double distanceM; // 미터
-  final int durationSec; // 초
-  final int laneChanges; // 차선 변경 횟수
-  final int uTurns; // 유턴 횟수
+@freezed
+abstract class RouteInfo with _$RouteInfo {
+  const factory RouteInfo({
+    required String label,
+    @JsonKey(name: 'path_points') @Default([]) List<List<double>> pathPoints,
+    @JsonKey(name: 'display_path_points')
+    @Default([])
+    List<List<double>> displayPathPoints,
+    @JsonKey(name: 'distance_m') @Default(0.0) double distanceM,
+    @JsonKey(name: 'duration_sec') @Default(0) int durationSec,
+    @JsonKey(name: 'lane_changes') @Default(0) int laneChanges,
+    @JsonKey(name: 'u_turns') @Default(0) int uTurns,
+  }) = _RouteInfo;
 
-  const RouteInfo({
-    required this.label,
-    required this.pathPoints,
-    required this.displayPathPoints,
-    required this.distanceM,
-    required this.durationSec,
-    required this.laneChanges,
-    required this.uTurns,
-  });
+  const RouteInfo._();
+
+  factory RouteInfo.fromJson(Map<String, dynamic> json) =>
+      _$RouteInfoFromJson(json);
 
   // 거리를 km로 변환
   double get distanceKm => distanceM / 1000.0;
@@ -46,93 +51,31 @@ class RouteInfo {
         return RouteOption.easy;
     }
   }
-
-  factory RouteInfo.fromJson(Map<String, dynamic> json) {
-    return RouteInfo(
-      label: json['label'] as String? ?? 'EASY',
-      pathPoints:
-          (json['path_points'] as List<dynamic>?)
-              ?.map(
-                (point) => (point as List<dynamic>)
-                    .map((coord) => (coord as num).toDouble())
-                    .toList(),
-              )
-              .toList()
-              .cast<List<double>>() ??
-          [],
-      displayPathPoints:
-          (json['display_path_points'] as List<dynamic>?)
-              ?.map(
-                (point) => (point as List<dynamic>)
-                    .map((coord) => (coord as num).toDouble())
-                    .toList(),
-              )
-              .toList()
-              .cast<List<double>>() ??
-          [],
-      distanceM: (json['distance_m'] as num?)?.toDouble() ?? 0.0,
-      durationSec: (json['duration_sec'] as num?)?.toInt() ?? 0,
-      laneChanges: (json['lane_changes'] as num?)?.toInt() ?? 0,
-      uTurns: (json['u_turns'] as num?)?.toInt() ?? 0,
-    );
-  }
-
-  @override
-  String toString() {
-    return 'RouteInfo(label: $label, distance: ${distanceKm.toStringAsFixed(1)}km, duration: $durationMin분, laneChanges: $laneChanges, uTurns: $uTurns)';
-  }
 }
 
-class RouteResponse {
-  final Map<String, RouteInfo> routes;
-  final Map<String, dynamic> requestEcho;
-  final double elapsedMs;
-
-  const RouteResponse({
-    required this.routes,
-    required this.requestEcho,
-    required this.elapsedMs,
-  });
-
-  // 편의 메서드들
-  RouteInfo? get easyRoute => routes['EASY'];
-  RouteInfo? get recommendRoute => routes['RECOMMEND'];
-  RouteInfo? get mainRoadRoute => routes['MAIN_ROAD'];
-
-  List<RouteInfo> get routeList => routes.values.toList();
-
-  factory RouteResponse.fromJson(Map<String, dynamic> json) {
-    final routesData = json['routes'] as Map<String, dynamic>? ?? {};
-    final Map<String, RouteInfo> parsedRoutes = {};
-
-    for (final entry in routesData.entries) {
-      parsedRoutes[entry.key] = RouteInfo.fromJson(
-        entry.value as Map<String, dynamic>,
-      );
-    }
-
-    return RouteResponse(
-      routes: parsedRoutes,
-      requestEcho: json['request_echo'] as Map<String, dynamic>? ?? {},
-      elapsedMs: (json['elapsed_ms'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
+// 백엔드 응답을 List<RouteInfo>로 변환하는 헬퍼 함수
+List<RouteInfo> parseRoutesFromResponse(Map<String, dynamic> json) {
+  final routesData = json['routes'] as Map<String, dynamic>? ?? {};
+  return routesData.entries
+      .map((entry) => RouteInfo.fromJson(entry.value as Map<String, dynamic>))
+      .toList();
 }
 
-class RouteRequest {
-  final double startLat;
-  final double startLng;
-  final double endLat;
-  final double endLng;
+@freezed
+abstract class RouteRequest with _$RouteRequest {
+  const factory RouteRequest({
+    required double startLat,
+    required double startLng,
+    required double endLat,
+    required double endLng,
+  }) = _RouteRequest;
 
-  const RouteRequest({
-    required this.startLat,
-    required this.startLng,
-    required this.endLat,
-    required this.endLng,
-  });
+  const RouteRequest._();
 
-  Map<String, dynamic> toJson() {
+  factory RouteRequest.fromJson(Map<String, dynamic> json) =>
+      _$RouteRequestFromJson(json);
+
+  Map<String, dynamic> toRequestBody() {
     return {
       'origin': {'x': startLng, 'y': startLat},
       'destination': {'x': endLng, 'y': endLat},

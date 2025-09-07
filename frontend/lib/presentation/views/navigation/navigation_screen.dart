@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/presentation/viewmodels/navigation_viewmodel.dart';
 
-class NavigationScreen extends StatefulWidget {
+class NavigationScreen extends ConsumerWidget {
   const NavigationScreen({super.key});
 
   @override
-  State<NavigationScreen> createState() => _NavigationScreenState();
-}
-
-class _NavigationScreenState extends State<NavigationScreen> {
-  bool _isEasyMode = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isEasyMode = ref.watch(navigationViewmodelProvider);
     final screenSize = MediaQuery.of(context).size;
     final easyBackgroundHeight = 320.0;
-    final iconSize = _isEasyMode ? 160.0 : 80.0;
-    final slideOffset = _isEasyMode ? easyBackgroundHeight : 0.0;
+    final iconSize = isEasyMode ? 160.0 : 80.0;
+    final slideOffset = isEasyMode ? easyBackgroundHeight : 0.0;
 
     return Scaffold(
       body: Stack(
@@ -35,10 +31,10 @@ class _NavigationScreenState extends State<NavigationScreen> {
             top: 0,
             left: 0,
             width: screenSize.width,
-            height: _isEasyMode ? easyBackgroundHeight : 0,
+            height: isEasyMode ? easyBackgroundHeight : 0,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 300),
-              opacity: _isEasyMode ? 1.0 : 0.0,
+              opacity: isEasyMode ? 1.0 : 0.0,
               child: Image.asset(
                 "assets/images/easy_background.gif",
                 width: screenSize.width,
@@ -56,7 +52,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
-              height: _isEasyMode ? 120 : 170,
+              height: isEasyMode ? 120 : 170,
               decoration: BoxDecoration(color: const Color(0xFF2E65C8)),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -120,7 +116,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            top: (_isEasyMode ? 120 : 170) + slideOffset,
+            top: (isEasyMode ? 120 : 170) + slideOffset,
             left: 0,
             child: Container(
               width: 170,
@@ -159,7 +155,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            top: (_isEasyMode ? 220 : 270) + slideOffset,
+            top: (isEasyMode ? 220 : 270) + slideOffset,
             left: 40,
             child: Image.asset(
               'assets/images/speed.png',
@@ -171,7 +167,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            top: (_isEasyMode ? 300 : 350) + slideOffset,
+            top: (isEasyMode ? 300 : 350) + slideOffset,
             left: 15,
             child: Image.asset(
               'assets/images/limit.png',
@@ -183,10 +179,12 @@ class _NavigationScreenState extends State<NavigationScreen> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            top: _isEasyMode ? (easyBackgroundHeight - iconSize) / 2 : 70.0,
-            right: _isEasyMode ? (screenSize.width - iconSize) / 2 : 30.0,
+            top: isEasyMode ? (easyBackgroundHeight - iconSize) / 2 : 70.0,
+            right: isEasyMode ? (screenSize.width - iconSize) / 2 : 30.0,
             child: GestureDetector(
-              onTap: () => setState(() => _isEasyMode = !_isEasyMode),
+              onTap: () => ref
+                  .read(navigationViewmodelProvider.notifier)
+                  .toggleEasyMode(),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,

@@ -1,48 +1,23 @@
 import 'dart:convert';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:frontend/data/models/place_model.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:frontend/data/models/place_search_model.dart';
 import 'package:http/http.dart' as http;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'kakao_local_datasource.g.dart';
+
+@Riverpod(keepAlive: true)
+KakaoLocalDatasource kakaoLocalDatasource(Ref ref) {
+  return KakaoLocalDatasource();
+}
 
 class KakaoLocalDatasource {
   static const String _baseUrl = 'https://dapi.kakao.com/v2/local';
   static String get _apiKey => dotenv.env['KAKAO_REST_API_KEY'] ?? '';
 
-  // 키워드로 장소 검색
-  Future<PlaceSearchResponse> searchPlaces({
-    required String query,
-    int page = 1,
-    int size = 15,
-  }) async {
-    try {
-      final uri = Uri.parse('$_baseUrl/search/keyword.json').replace(
-        queryParameters: {
-          'query': query,
-          'page': page.toString(),
-          'size': size.toString(),
-        },
-      );
-
-      final response = await http.get(
-        uri,
-        headers: {
-          'Authorization': 'KakaoAK $_apiKey',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        return PlaceSearchResponse.fromJson(data);
-      } else {
-        throw Exception('Failed to search places: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error searching places: $e');
-    }
-  }
-
-  // 좌표로 주소 검색
+  /// 좌표로 주소 검색
   Future<String> getAddressFromCoordinates({
     required double longitude,
     required double latitude,
@@ -74,6 +49,40 @@ class KakaoLocalDatasource {
       }
     } catch (e) {
       throw Exception('Error getting address: $e');
+    }
+  }
+
+  /// 키워드로 장소 검색
+  Future<PlaceSearchResponse> searchPlacesFromQuery({
+    required String query,
+    int page = 1,
+    int size = 15,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/search/keyword.json').replace(
+        queryParameters: {
+          'query': query,
+          'page': page.toString(),
+          'size': size.toString(),
+        },
+      );
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'KakaoAK $_apiKey',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return PlaceSearchResponse.fromJson(data);
+      } else {
+        throw Exception('Failed to search places: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error searching places: $e');
     }
   }
 }
