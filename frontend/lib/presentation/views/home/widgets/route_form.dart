@@ -84,6 +84,26 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     }
   }
 
+  Future<void> _selectEndPlace() async {
+    final result = await Navigator.push<Location>(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            PlaceSearchScreen(title: '도착지 선택', hintText: '도착지를 검색하세요'),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _endPlace = result;
+        _endController.text = _endPlace!.placeName;
+      });
+      // Place provider에도 업데이트
+      ref.read(placeSearchViewmodelProvider.notifier).setEndPlace(_endPlace);
+      _updateButtonState();
+    }
+  }
+
   Future<void> _findRoute() async {
     if (_startPlace == null || _endPlace == null) return;
 
@@ -125,26 +145,6 @@ class _RouteFormState extends ConsumerState<RouteForm> {
           ),
         );
       }
-    }
-  }
-
-  Future<void> _selectEndPlace() async {
-    final result = await Navigator.push<Location>(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            PlaceSearchScreen(title: '도착지 선택', hintText: '도착지를 검색하세요'),
-      ),
-    );
-
-    if (result != null) {
-      setState(() {
-        _endPlace = result;
-        _endController.text = _endPlace!.placeName;
-      });
-      // Place provider에도 업데이트
-      ref.read(placeSearchViewmodelProvider.notifier).setEndPlace(_endPlace);
-      _updateButtonState();
     }
   }
 

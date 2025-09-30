@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/data/models/location_model.dart';
+import 'package:frontend/presentation/utils/palette.dart';
 import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
 import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
 
@@ -145,7 +146,7 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
                   Text(
                     '현위치',
                     style: TextStyle(
-                      color: const Color(0xFFFF5930),
+                      color: Palette.primaryAccentColor,
                       fontSize: 16,
                       fontFamily: 'Pretendard',
                       fontWeight: FontWeight.w600,
@@ -230,8 +231,9 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
           },
         );
       },
-      loading: () =>
-          Center(child: CircularProgressIndicator(color: Color(0xFFFF5930))),
+      loading: () => Center(
+        child: CircularProgressIndicator(color: Palette.primaryAccentColor),
+      ),
       error: (error, _) => Center(
         child: Text(
           '검색 중 오류가 발생했습니다: ${error.toString()}',
@@ -268,7 +270,7 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
               ),
               child: Icon(
                 Icons.location_on,
-                color: Color(0xFFFF5930),
+                color: Palette.primaryAccentColor,
                 size: 20,
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:frontend/presentation/utils/palette.dart';
 
 class BottomNavigationPanel extends StatelessWidget {
   const BottomNavigationPanel({super.key});
@@ -40,7 +41,7 @@ class BottomNavigationPanel extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
               decoration: ShapeDecoration(
-                color: const Color(0xFFFF5930),
+                color: Palette.primaryAccentColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(55),
                 ),
