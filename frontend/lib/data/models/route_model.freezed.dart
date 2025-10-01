@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RouteInfo {
 
- String get label;@JsonKey(name: 'path_points') List<List<double>> get pathPoints;@JsonKey(name: 'display_path_points') List<List<double>> get displayPathPoints;@JsonKey(name: 'distance_m') double get distanceM;@JsonKey(name: 'duration_sec') int get durationSec;@JsonKey(name: 'lane_changes') int get laneChanges;@JsonKey(name: 'u_turns') int get uTurns;
+ String get label;@JsonKey(name: 'path_points') List<List<double>> get pathPoints;@JsonKey(name: 'display_path_points') List<List<double>> get displayPathPoints;@JsonKey(name: 'distance_m') double get distanceM;@JsonKey(name: 'duration_sec') int get durationSec;@JsonKey(name: 'lane_changes') int get laneChanges;@JsonKey(name: 'u_turns') int get uTurns;@JsonKey(name: 'steep_slopes') int get steepSlopes;
 /// Create a copy of RouteInfo
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $RouteInfoCopyWith<RouteInfo> get copyWith => _$RouteInfoCopyWithImpl<RouteInfo>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RouteInfo&&(identical(other.label, label) || other.label == label)&&const DeepCollectionEquality().equals(other.pathPoints, pathPoints)&&const DeepCollectionEquality().equals(other.displayPathPoints, displayPathPoints)&&(identical(other.distanceM, distanceM) || other.distanceM == distanceM)&&(identical(other.durationSec, durationSec) || other.durationSec == durationSec)&&(identical(other.laneChanges, laneChanges) || other.laneChanges == laneChanges)&&(identical(other.uTurns, uTurns) || other.uTurns == uTurns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RouteInfo&&(identical(other.label, label) || other.label == label)&&const DeepCollectionEquality().equals(other.pathPoints, pathPoints)&&const DeepCollectionEquality().equals(other.displayPathPoints, displayPathPoints)&&(identical(other.distanceM, distanceM) || other.distanceM == distanceM)&&(identical(other.durationSec, durationSec) || other.durationSec == durationSec)&&(identical(other.laneChanges, laneChanges) || other.laneChanges == laneChanges)&&(identical(other.uTurns, uTurns) || other.uTurns == uTurns)&&(identical(other.steepSlopes, steepSlopes) || other.steepSlopes == steepSlopes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,label,const DeepCollectionEquality().hash(pathPoints),const DeepCollectionEquality().hash(displayPathPoints),distanceM,durationSec,laneChanges,uTurns);
+int get hashCode => Object.hash(runtimeType,label,const DeepCollectionEquality().hash(pathPoints),const DeepCollectionEquality().hash(displayPathPoints),distanceM,durationSec,laneChanges,uTurns,steepSlopes);
 
 @override
 String toString() {
-  return 'RouteInfo(label: $label, pathPoints: $pathPoints, displayPathPoints: $displayPathPoints, distanceM: $distanceM, durationSec: $durationSec, laneChanges: $laneChanges, uTurns: $uTurns)';
+  return 'RouteInfo(label: $label, pathPoints: $pathPoints, displayPathPoints: $displayPathPoints, distanceM: $distanceM, durationSec: $durationSec, laneChanges: $laneChanges, uTurns: $uTurns, steepSlopes: $steepSlopes)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $RouteInfoCopyWith<$Res>  {
   factory $RouteInfoCopyWith(RouteInfo value, $Res Function(RouteInfo) _then) = _$RouteInfoCopyWithImpl;
 @useResult
 $Res call({
- String label,@JsonKey(name: 'path_points') List<List<double>> pathPoints,@JsonKey(name: 'display_path_points') List<List<double>> displayPathPoints,@JsonKey(name: 'distance_m') double distanceM,@JsonKey(name: 'duration_sec') int durationSec,@JsonKey(name: 'lane_changes') int laneChanges,@JsonKey(name: 'u_turns') int uTurns
+ String label,@JsonKey(name: 'path_points') List<List<double>> pathPoints,@JsonKey(name: 'display_path_points') List<List<double>> displayPathPoints,@JsonKey(name: 'distance_m') double distanceM,@JsonKey(name: 'duration_sec') int durationSec,@JsonKey(name: 'lane_changes') int laneChanges,@JsonKey(name: 'u_turns') int uTurns,@JsonKey(name: 'steep_slopes') int steepSlopes
 });
 
 
@@ -65,7 +65,7 @@ class _$RouteInfoCopyWithImpl<$Res>
 
 /// Create a copy of RouteInfo
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? pathPoints = null,Object? displayPathPoints = null,Object? distanceM = null,Object? durationSec = null,Object? laneChanges = null,Object? uTurns = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? label = null,Object? pathPoints = null,Object? displayPathPoints = null,Object? distanceM = null,Object? durationSec = null,Object? laneChanges = null,Object? uTurns = null,Object? steepSlopes = null,}) {
   return _then(_self.copyWith(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,pathPoints: null == pathPoints ? _self.pathPoints : pathPoints // ignore: cast_nullable_to_non_nullable
@@ -74,6 +74,7 @@ as List<List<double>>,distanceM: null == distanceM ? _self.distanceM : distanceM
 as double,durationSec: null == durationSec ? _self.durationSec : durationSec // ignore: cast_nullable_to_non_nullable
 as int,laneChanges: null == laneChanges ? _self.laneChanges : laneChanges // ignore: cast_nullable_to_non_nullable
 as int,uTurns: null == uTurns ? _self.uTurns : uTurns // ignore: cast_nullable_to_non_nullable
+as int,steepSlopes: null == steepSlopes ? _self.steepSlopes : steepSlopes // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -159,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns, @JsonKey(name: 'steep_slopes')  int steepSlopes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _RouteInfo() when $default != null:
-return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns);case _:
+return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns,_that.steepSlopes);case _:
   return orElse();
 
 }
@@ -180,10 +181,10 @@ return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.dista
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns, @JsonKey(name: 'steep_slopes')  int steepSlopes)  $default,) {final _that = this;
 switch (_that) {
 case _RouteInfo():
-return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns);case _:
+return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns,_that.steepSlopes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +201,10 @@ return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.dista
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String label, @JsonKey(name: 'path_points')  List<List<double>> pathPoints, @JsonKey(name: 'display_path_points')  List<List<double>> displayPathPoints, @JsonKey(name: 'distance_m')  double distanceM, @JsonKey(name: 'duration_sec')  int durationSec, @JsonKey(name: 'lane_changes')  int laneChanges, @JsonKey(name: 'u_turns')  int uTurns, @JsonKey(name: 'steep_slopes')  int steepSlopes)?  $default,) {final _that = this;
 switch (_that) {
 case _RouteInfo() when $default != null:
-return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns);case _:
+return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.distanceM,_that.durationSec,_that.laneChanges,_that.uTurns,_that.steepSlopes);case _:
   return null;
 
 }
@@ -215,7 +216,7 @@ return $default(_that.label,_that.pathPoints,_that.displayPathPoints,_that.dista
 @JsonSerializable()
 
 class _RouteInfo extends RouteInfo {
-  const _RouteInfo({required this.label, @JsonKey(name: 'path_points') final  List<List<double>> pathPoints = const [], @JsonKey(name: 'display_path_points') final  List<List<double>> displayPathPoints = const [], @JsonKey(name: 'distance_m') this.distanceM = 0.0, @JsonKey(name: 'duration_sec') this.durationSec = 0, @JsonKey(name: 'lane_changes') this.laneChanges = 0, @JsonKey(name: 'u_turns') this.uTurns = 0}): _pathPoints = pathPoints,_displayPathPoints = displayPathPoints,super._();
+  const _RouteInfo({required this.label, @JsonKey(name: 'path_points') final  List<List<double>> pathPoints = const [], @JsonKey(name: 'display_path_points') final  List<List<double>> displayPathPoints = const [], @JsonKey(name: 'distance_m') this.distanceM = 0.0, @JsonKey(name: 'duration_sec') this.durationSec = 0, @JsonKey(name: 'lane_changes') this.laneChanges = 0, @JsonKey(name: 'u_turns') this.uTurns = 0, @JsonKey(name: 'steep_slopes') this.steepSlopes = 0}): _pathPoints = pathPoints,_displayPathPoints = displayPathPoints,super._();
   factory _RouteInfo.fromJson(Map<String, dynamic> json) => _$RouteInfoFromJson(json);
 
 @override final  String label;
@@ -237,6 +238,7 @@ class _RouteInfo extends RouteInfo {
 @override@JsonKey(name: 'duration_sec') final  int durationSec;
 @override@JsonKey(name: 'lane_changes') final  int laneChanges;
 @override@JsonKey(name: 'u_turns') final  int uTurns;
+@override@JsonKey(name: 'steep_slopes') final  int steepSlopes;
 
 /// Create a copy of RouteInfo
 /// with the given fields replaced by the non-null parameter values.
@@ -251,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RouteInfo&&(identical(other.label, label) || other.label == label)&&const DeepCollectionEquality().equals(other._pathPoints, _pathPoints)&&const DeepCollectionEquality().equals(other._displayPathPoints, _displayPathPoints)&&(identical(other.distanceM, distanceM) || other.distanceM == distanceM)&&(identical(other.durationSec, durationSec) || other.durationSec == durationSec)&&(identical(other.laneChanges, laneChanges) || other.laneChanges == laneChanges)&&(identical(other.uTurns, uTurns) || other.uTurns == uTurns));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _RouteInfo&&(identical(other.label, label) || other.label == label)&&const DeepCollectionEquality().equals(other._pathPoints, _pathPoints)&&const DeepCollectionEquality().equals(other._displayPathPoints, _displayPathPoints)&&(identical(other.distanceM, distanceM) || other.distanceM == distanceM)&&(identical(other.durationSec, durationSec) || other.durationSec == durationSec)&&(identical(other.laneChanges, laneChanges) || other.laneChanges == laneChanges)&&(identical(other.uTurns, uTurns) || other.uTurns == uTurns)&&(identical(other.steepSlopes, steepSlopes) || other.steepSlopes == steepSlopes));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,label,const DeepCollectionEquality().hash(_pathPoints),const DeepCollectionEquality().hash(_displayPathPoints),distanceM,durationSec,laneChanges,uTurns);
+int get hashCode => Object.hash(runtimeType,label,const DeepCollectionEquality().hash(_pathPoints),const DeepCollectionEquality().hash(_displayPathPoints),distanceM,durationSec,laneChanges,uTurns,steepSlopes);
 
 @override
 String toString() {
-  return 'RouteInfo(label: $label, pathPoints: $pathPoints, displayPathPoints: $displayPathPoints, distanceM: $distanceM, durationSec: $durationSec, laneChanges: $laneChanges, uTurns: $uTurns)';
+  return 'RouteInfo(label: $label, pathPoints: $pathPoints, displayPathPoints: $displayPathPoints, distanceM: $distanceM, durationSec: $durationSec, laneChanges: $laneChanges, uTurns: $uTurns, steepSlopes: $steepSlopes)';
 }
 
 
@@ -271,7 +273,7 @@ abstract mixin class _$RouteInfoCopyWith<$Res> implements $RouteInfoCopyWith<$Re
   factory _$RouteInfoCopyWith(_RouteInfo value, $Res Function(_RouteInfo) _then) = __$RouteInfoCopyWithImpl;
 @override @useResult
 $Res call({
- String label,@JsonKey(name: 'path_points') List<List<double>> pathPoints,@JsonKey(name: 'display_path_points') List<List<double>> displayPathPoints,@JsonKey(name: 'distance_m') double distanceM,@JsonKey(name: 'duration_sec') int durationSec,@JsonKey(name: 'lane_changes') int laneChanges,@JsonKey(name: 'u_turns') int uTurns
+ String label,@JsonKey(name: 'path_points') List<List<double>> pathPoints,@JsonKey(name: 'display_path_points') List<List<double>> displayPathPoints,@JsonKey(name: 'distance_m') double distanceM,@JsonKey(name: 'duration_sec') int durationSec,@JsonKey(name: 'lane_changes') int laneChanges,@JsonKey(name: 'u_turns') int uTurns,@JsonKey(name: 'steep_slopes') int steepSlopes
 });
 
 
@@ -288,7 +290,7 @@ class __$RouteInfoCopyWithImpl<$Res>
 
 /// Create a copy of RouteInfo
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? pathPoints = null,Object? displayPathPoints = null,Object? distanceM = null,Object? durationSec = null,Object? laneChanges = null,Object? uTurns = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? label = null,Object? pathPoints = null,Object? displayPathPoints = null,Object? distanceM = null,Object? durationSec = null,Object? laneChanges = null,Object? uTurns = null,Object? steepSlopes = null,}) {
   return _then(_RouteInfo(
 label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,pathPoints: null == pathPoints ? _self._pathPoints : pathPoints // ignore: cast_nullable_to_non_nullable
@@ -297,6 +299,7 @@ as List<List<double>>,distanceM: null == distanceM ? _self.distanceM : distanceM
 as double,durationSec: null == durationSec ? _self.durationSec : durationSec // ignore: cast_nullable_to_non_nullable
 as int,laneChanges: null == laneChanges ? _self.laneChanges : laneChanges // ignore: cast_nullable_to_non_nullable
 as int,uTurns: null == uTurns ? _self.uTurns : uTurns // ignore: cast_nullable_to_non_nullable
+as int,steepSlopes: null == steepSlopes ? _self.steepSlopes : steepSlopes // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

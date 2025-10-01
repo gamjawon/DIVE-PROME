@@ -28,6 +28,7 @@ _RouteInfo _$RouteInfoFromJson(Map<String, dynamic> json) => _RouteInfo(
   durationSec: (json['duration_sec'] as num?)?.toInt() ?? 0,
   laneChanges: (json['lane_changes'] as num?)?.toInt() ?? 0,
   uTurns: (json['u_turns'] as num?)?.toInt() ?? 0,
+  steepSlopes: (json['steep_slopes'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$RouteInfoToJson(_RouteInfo instance) =>
@@ -39,6 +40,7 @@ Map<String, dynamic> _$RouteInfoToJson(_RouteInfo instance) =>
       'duration_sec': instance.durationSec,
       'lane_changes': instance.laneChanges,
       'u_turns': instance.uTurns,
+      'steep_slopes': instance.steepSlopes,
     };
 
 _RouteRequest _$RouteRequestFromJson(Map<String, dynamic> json) =>

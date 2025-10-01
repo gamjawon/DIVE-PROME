@@ -119,7 +119,8 @@ class _RouteFormState extends ConsumerState<RouteForm> {
 
       // 경로 결과 출력
       final routeState = ref.read(routeViewmodelProvider);
-      routeState.whenData((routeList) {
+      routeState.whenData((state) {
+        final routeList = state.routeList;
         if (routeList != null && routeList.isNotEmpty) {
           print('총 경로 개수: ${routeList.length}');
           for (var route in routeList) {

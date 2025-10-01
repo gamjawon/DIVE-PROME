@@ -25,6 +25,7 @@ abstract class RouteInfo with _$RouteInfo {
     @JsonKey(name: 'duration_sec') @Default(0) int durationSec,
     @JsonKey(name: 'lane_changes') @Default(0) int laneChanges,
     @JsonKey(name: 'u_turns') @Default(0) int uTurns,
+    @JsonKey(name: 'steep_slopes') @Default(0) int steepSlopes,
   }) = _RouteInfo;
 
   const RouteInfo._();

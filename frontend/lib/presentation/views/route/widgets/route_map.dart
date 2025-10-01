@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/presentation/states/route_state.dart';
 import 'package:frontend/presentation/utils/palette.dart';
-import 'package:frontend/presentation/viewmodels/route_state_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class RouteMap extends ConsumerStatefulWidget {
@@ -17,8 +18,7 @@ class _RouteMapState extends ConsumerState<RouteMap> {
   RouteOption? _lastSelectedOption;
   List<RouteInfo>? _lastRouteList;
 
-  void _drawAllRoutes() {
-    final routeState = ref.read(routeStateViewmodelProvider);
+  void _drawAllRoutes(RouteState routeState) {
     if (_mapController == null || routeState.routeList == null) return;
 
     final routeList = routeState.routeList!;
@@ -91,8 +91,7 @@ class _RouteMapState extends ConsumerState<RouteMap> {
     }
   }
 
-  void _adjustCamera() {
-    final routeState = ref.read(routeStateViewmodelProvider);
+  void _adjustCamera(RouteState routeState) {
     if (_mapController == null || routeState.routeList == null) return;
 
     final routeList = routeState.routeList!;
@@ -191,8 +190,16 @@ class _RouteMapState extends ConsumerState<RouteMap> {
 
   @override
   Widget build(BuildContext context) {
-    // final routeState = ref.read(routeStateViewmodelProvider);
-    final routeState = ref.watch(routeStateViewmodelProvider);
+    final routeStateAsync = ref.watch(routeViewmodelProvider);
+
+    return routeStateAsync.when(
+      data: (routeState) => _buildMapWidget(context, routeState),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Center(child: Text('경로를 불러올 수 없습니다.')),
+    );
+  }
+
+  Widget _buildMapWidget(BuildContext context, RouteState routeState) {
     if (routeState.routeList == null || routeState.routeList!.isEmpty) {
       return const Center(child: Text('경로 데이터가 없습니다.'));
     }
@@ -205,8 +212,8 @@ class _RouteMapState extends ConsumerState<RouteMap> {
         _lastSelectedOption = routeState.selectedOption;
         _lastRouteList = routeState.routeList;
 
-        _drawAllRoutes();
-        // _adjustCamera();
+        _drawAllRoutes(routeState);
+        // _adjustCamera(routeState);
       }
     });
 
@@ -232,8 +239,8 @@ class _RouteMapState extends ConsumerState<RouteMap> {
       ),
       onMapReady: (controller) {
         _mapController = controller;
-        _drawAllRoutes();
-        _adjustCamera();
+        _drawAllRoutes(routeState);
+        _adjustCamera(routeState);
       },
     );
   }

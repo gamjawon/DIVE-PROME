@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/presentation/states/route_state.dart';
 import 'package:frontend/presentation/utils/palette.dart';
-import 'package:frontend/presentation/viewmodels/route_state_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:frontend/presentation/views/navigation/navigation_screen.dart';
 
 class RouteBottomContainer extends ConsumerWidget {
@@ -80,7 +81,20 @@ class RouteBottomContainer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final routeState = ref.watch(routeStateViewmodelProvider);
+    final routeStateAsync = ref.watch(routeViewmodelProvider);
+
+    return routeStateAsync.when(
+      data: (routeState) => _buildContent(context, ref, routeState),
+      loading: () => SizedBox.shrink(),
+      error: (_, __) => SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    WidgetRef ref,
+    RouteState routeState,
+  ) {
     if (routeState.routeList == null) return SizedBox.shrink();
 
     // routes는 이제 Map<String, RouteInfo> 형태입니다
@@ -121,7 +135,7 @@ class RouteBottomContainer extends ConsumerWidget {
                     child: GestureDetector(
                       onTap: () {
                         ref
-                            .read(routeStateViewmodelProvider.notifier)
+                            .read(routeViewmodelProvider.notifier)
                             .setSelectedOption(option);
                       },
                       child: Container(
@@ -283,7 +297,7 @@ class RouteBottomContainer extends ConsumerWidget {
                       ),
                       _buildStatItem(
                         '급경사로 수',
-                        '1회',
+                        '${selectedRoute.steepSlopes}회',
                         Palette.routeColors[routeState.selectedOption]!,
                       ),
                     ],
