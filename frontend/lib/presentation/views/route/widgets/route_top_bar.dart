@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/place_select_viewmodel.dart';
 
 class RouteTopBar extends ConsumerWidget {
   const RouteTopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final places = ref.watch(placeSearchViewmodelProvider);
-    final startPlace = places.startPlace;
-    final endPlace = places.endPlace;
+    final places = ref.watch(placeSelectViewmodelProvider);
+    final startPlace = places.start;
+    final endPlace = places.end;
 
     return Positioned(
       top: 70,

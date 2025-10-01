@@ -167,8 +167,13 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   }
 
   Widget _buildSearchResults() {
-    final placeSearchState = ref.watch(placeSearchViewmodelProvider);
-    final searchState = placeSearchState.searchResults;
+    final placeSearchResponse = ref.watch(placeSearchViewmodelProvider);
+    final searchState = placeSearchResponse.when(
+      data: (response) => AsyncValue.data(response?.documents ?? []),
+      loading: () => const AsyncValue<List<Location>>.loading(),
+      error: (error, stackTrace) =>
+          AsyncValue<List<Location>>.error(error, stackTrace),
+    );
 
     return searchState.when(
       data: (searchResults) {

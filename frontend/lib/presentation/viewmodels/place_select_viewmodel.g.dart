@@ -1,31 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'place_search_viewmodel.dart';
+part of 'place_select_viewmodel.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$placeSearchViewmodelHash() =>
-    r'0b02d4fcb305ef94c22dde4e2c52d334724b4bf2';
+String _$placeSelectViewmodelHash() =>
+    r'7d9de3300cb8d3e8ccc67ec13e0cd800032ad765';
 
-/// See also [PlaceSearchViewmodel].
-@ProviderFor(PlaceSearchViewmodel)
-final placeSearchViewmodelProvider =
-    AutoDisposeNotifierProvider<
-      PlaceSearchViewmodel,
-      AsyncValue<PlaceSearchResponse?>
-    >.internal(
-      PlaceSearchViewmodel.new,
-      name: r'placeSearchViewmodelProvider',
+/// See also [PlaceSelectViewmodel].
+@ProviderFor(PlaceSelectViewmodel)
+final placeSelectViewmodelProvider =
+    NotifierProvider<PlaceSelectViewmodel, SelectedPlaces>.internal(
+      PlaceSelectViewmodel.new,
+      name: r'placeSelectViewmodelProvider',
       debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
           ? null
-          : _$placeSearchViewmodelHash,
+          : _$placeSelectViewmodelHash,
       dependencies: null,
       allTransitiveDependencies: null,
     );
 
-typedef _$PlaceSearchViewmodel =
-    AutoDisposeNotifier<AsyncValue<PlaceSearchResponse?>>;
+typedef _$PlaceSelectViewmodel = Notifier<SelectedPlaces>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

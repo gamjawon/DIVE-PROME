@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frontend/data/models/location_model.dart';
-import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/place_select_viewmodel.dart';
 import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:frontend/presentation/views/route/route_screen.dart';
 import 'package:frontend/presentation/views/search/place_search_screen.dart';
@@ -56,8 +56,8 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     });
 
     // Place provider에도 업데이트
-    ref.read(placeSearchViewmodelProvider.notifier).setStartPlace(_startPlace);
-    ref.read(placeSearchViewmodelProvider.notifier).setEndPlace(_endPlace);
+    ref.read(placeSelectViewmodelProvider.notifier).setStartPlace(_startPlace);
+    ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(_endPlace);
 
     _updateButtonState();
   }
@@ -78,7 +78,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
       });
       // Place provider에도 업데이트
       ref
-          .read(placeSearchViewmodelProvider.notifier)
+          .read(placeSelectViewmodelProvider.notifier)
           .setStartPlace(_startPlace);
       _updateButtonState();
     }
@@ -99,7 +99,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
         _endController.text = _endPlace!.placeName;
       });
       // Place provider에도 업데이트
-      ref.read(placeSearchViewmodelProvider.notifier).setEndPlace(_endPlace);
+      ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(_endPlace);
       _updateButtonState();
     }
   }
