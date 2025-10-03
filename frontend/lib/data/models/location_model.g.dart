@@ -11,7 +11,6 @@ _Location _$LocationFromJson(Map<String, dynamic> json) => _Location(
   longitude: _stringToDouble(json['x']),
   placeName: json['place_name'] as String,
   addressName: json['address_name'] as String,
-  roadAddressName: json['road_address_name'] as String? ?? '',
   categoryName: json['category_name'] as String? ?? '',
 );
 
@@ -20,6 +19,5 @@ Map<String, dynamic> _$LocationToJson(_Location instance) => <String, dynamic>{
   'x': instance.longitude,
   'place_name': instance.placeName,
   'address_name': instance.addressName,
-  'road_address_name': instance.roadAddressName,
   'category_name': instance.categoryName,
 };

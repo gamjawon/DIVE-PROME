@@ -7,7 +7,7 @@ part of 'place_search_viewmodel.dart';
 // **************************************************************************
 
 String _$placeSearchViewmodelHash() =>
-    r'0b02d4fcb305ef94c22dde4e2c52d334724b4bf2';
+    r'8f341e2eee03fbf6ba1a21dfa842e61c9c45fd10';
 
 /// See also [PlaceSearchViewmodel].
 @ProviderFor(PlaceSearchViewmodel)

@@ -4,7 +4,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'place_search_viewmodel.g.dart';
 
-// ==================== 장소 검색 결과 관리 ====================
 @riverpod
 class PlaceSearchViewmodel extends _$PlaceSearchViewmodel {
   @override
@@ -12,7 +11,6 @@ class PlaceSearchViewmodel extends _$PlaceSearchViewmodel {
     return const AsyncValue.data(null);
   }
 
-  /// 장소 검색
   Future<void> searchPlaces(String query) async {
     if (query.trim().isEmpty) {
       state = const AsyncValue.data(null);
@@ -21,17 +19,10 @@ class PlaceSearchViewmodel extends _$PlaceSearchViewmodel {
 
     state = const AsyncValue.loading();
 
-    try {
+    state = await AsyncValue.guard(() async {
       final repository = ref.read(placeSearchRepositoryProvider);
       final response = await repository.searchPlaces(query);
-      state = AsyncValue.data(response);
-    } catch (e, stackTrace) {
-      state = AsyncValue.error(e, stackTrace);
-    }
-  }
-
-  /// 검색 결과 초기화
-  void clearSearchResults() {
-    state = const AsyncValue.data(null);
+      return response;
+    });
   }
 }

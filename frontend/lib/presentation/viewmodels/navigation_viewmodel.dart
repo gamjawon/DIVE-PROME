@@ -18,7 +18,4 @@ class NavigationViewmodel extends _$NavigationViewmodel {
   void setEasyMode(bool isEasy) {
     state = isEasy;
   }
-
-  /// 현재 이지 모드 상태
-  bool get isEasyMode => state;
 }

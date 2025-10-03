@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Location {
 
-@JsonKey(name: 'y', fromJson: _stringToDouble) double get latitude;@JsonKey(name: 'x', fromJson: _stringToDouble) double get longitude;@JsonKey(name: 'place_name') String get placeName;@JsonKey(name: 'address_name') String get addressName;@JsonKey(name: 'road_address_name') String get roadAddressName;@JsonKey(name: 'category_name') String get categoryName;
+@JsonKey(name: 'y', fromJson: _stringToDouble) double get latitude;@JsonKey(name: 'x', fromJson: _stringToDouble) double get longitude;@JsonKey(name: 'place_name') String get placeName;@JsonKey(name: 'address_name') String get addressName;@JsonKey(name: 'category_name') String get categoryName;
 /// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $LocationCopyWith<Location> get copyWith => _$LocationCopyWithImpl<Location>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName)&&(identical(other.roadAddressName, roadAddressName) || other.roadAddressName == roadAddressName)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName,roadAddressName,categoryName);
+int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName,categoryName);
 
 @override
 String toString() {
-  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName, roadAddressName: $roadAddressName, categoryName: $categoryName)';
+  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName, categoryName: $categoryName)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $LocationCopyWith<$Res>  {
   factory $LocationCopyWith(Location value, $Res Function(Location) _then) = _$LocationCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'y', fromJson: _stringToDouble) double latitude,@JsonKey(name: 'x', fromJson: _stringToDouble) double longitude,@JsonKey(name: 'place_name') String placeName,@JsonKey(name: 'address_name') String addressName,@JsonKey(name: 'road_address_name') String roadAddressName,@JsonKey(name: 'category_name') String categoryName
+@JsonKey(name: 'y', fromJson: _stringToDouble) double latitude,@JsonKey(name: 'x', fromJson: _stringToDouble) double longitude,@JsonKey(name: 'place_name') String placeName,@JsonKey(name: 'address_name') String addressName,@JsonKey(name: 'category_name') String categoryName
 });
 
 
@@ -65,13 +65,12 @@ class _$LocationCopyWithImpl<$Res>
 
 /// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,Object? roadAddressName = null,Object? categoryName = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,Object? categoryName = null,}) {
   return _then(_self.copyWith(
 latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as double,placeName: null == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
 as String,addressName: null == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
-as String,roadAddressName: null == roadAddressName ? _self.roadAddressName : roadAddressName // ignore: cast_nullable_to_non_nullable
 as String,categoryName: null == categoryName ? _self.categoryName : categoryName // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -158,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'road_address_name')  String roadAddressName, @JsonKey(name: 'category_name')  String categoryName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'category_name')  String categoryName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Location() when $default != null:
-return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.roadAddressName,_that.categoryName);case _:
+return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.categoryName);case _:
   return orElse();
 
 }
@@ -179,10 +178,10 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'road_address_name')  String roadAddressName, @JsonKey(name: 'category_name')  String categoryName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'category_name')  String categoryName)  $default,) {final _that = this;
 switch (_that) {
 case _Location():
-return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.roadAddressName,_that.categoryName);case _:
+return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.categoryName);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +198,10 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'road_address_name')  String roadAddressName, @JsonKey(name: 'category_name')  String categoryName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'y', fromJson: _stringToDouble)  double latitude, @JsonKey(name: 'x', fromJson: _stringToDouble)  double longitude, @JsonKey(name: 'place_name')  String placeName, @JsonKey(name: 'address_name')  String addressName, @JsonKey(name: 'category_name')  String categoryName)?  $default,) {final _that = this;
 switch (_that) {
 case _Location() when $default != null:
-return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.roadAddressName,_that.categoryName);case _:
+return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName,_that.categoryName);case _:
   return null;
 
 }
@@ -214,14 +213,13 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 @JsonSerializable()
 
 class _Location implements Location {
-  const _Location({@JsonKey(name: 'y', fromJson: _stringToDouble) required this.latitude, @JsonKey(name: 'x', fromJson: _stringToDouble) required this.longitude, @JsonKey(name: 'place_name') required this.placeName, @JsonKey(name: 'address_name') required this.addressName, @JsonKey(name: 'road_address_name') this.roadAddressName = '', @JsonKey(name: 'category_name') this.categoryName = ''});
+  const _Location({@JsonKey(name: 'y', fromJson: _stringToDouble) required this.latitude, @JsonKey(name: 'x', fromJson: _stringToDouble) required this.longitude, @JsonKey(name: 'place_name') required this.placeName, @JsonKey(name: 'address_name') required this.addressName, @JsonKey(name: 'category_name') this.categoryName = ''});
   factory _Location.fromJson(Map<String, dynamic> json) => _$LocationFromJson(json);
 
 @override@JsonKey(name: 'y', fromJson: _stringToDouble) final  double latitude;
 @override@JsonKey(name: 'x', fromJson: _stringToDouble) final  double longitude;
 @override@JsonKey(name: 'place_name') final  String placeName;
 @override@JsonKey(name: 'address_name') final  String addressName;
-@override@JsonKey(name: 'road_address_name') final  String roadAddressName;
 @override@JsonKey(name: 'category_name') final  String categoryName;
 
 /// Create a copy of Location
@@ -237,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName)&&(identical(other.roadAddressName, roadAddressName) || other.roadAddressName == roadAddressName)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName)&&(identical(other.categoryName, categoryName) || other.categoryName == categoryName));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName,roadAddressName,categoryName);
+int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName,categoryName);
 
 @override
 String toString() {
-  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName, roadAddressName: $roadAddressName, categoryName: $categoryName)';
+  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName, categoryName: $categoryName)';
 }
 
 
@@ -257,7 +255,7 @@ abstract mixin class _$LocationCopyWith<$Res> implements $LocationCopyWith<$Res>
   factory _$LocationCopyWith(_Location value, $Res Function(_Location) _then) = __$LocationCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'y', fromJson: _stringToDouble) double latitude,@JsonKey(name: 'x', fromJson: _stringToDouble) double longitude,@JsonKey(name: 'place_name') String placeName,@JsonKey(name: 'address_name') String addressName,@JsonKey(name: 'road_address_name') String roadAddressName,@JsonKey(name: 'category_name') String categoryName
+@JsonKey(name: 'y', fromJson: _stringToDouble) double latitude,@JsonKey(name: 'x', fromJson: _stringToDouble) double longitude,@JsonKey(name: 'place_name') String placeName,@JsonKey(name: 'address_name') String addressName,@JsonKey(name: 'category_name') String categoryName
 });
 
 
@@ -274,13 +272,12 @@ class __$LocationCopyWithImpl<$Res>
 
 /// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,Object? roadAddressName = null,Object? categoryName = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,Object? categoryName = null,}) {
   return _then(_Location(
 latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
 as double,placeName: null == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
 as String,addressName: null == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
-as String,roadAddressName: null == roadAddressName ? _self.roadAddressName : roadAddressName // ignore: cast_nullable_to_non_nullable
 as String,categoryName: null == categoryName ? _self.categoryName : categoryName // ignore: cast_nullable_to_non_nullable
 as String,
   ));

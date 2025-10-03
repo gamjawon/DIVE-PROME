@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
 
 class TopStatusBar extends ConsumerWidget {
   const TopStatusBar({super.key, required this.screenWidth});

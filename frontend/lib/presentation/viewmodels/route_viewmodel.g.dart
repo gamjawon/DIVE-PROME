@@ -6,7 +6,7 @@ part of 'route_viewmodel.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$routeViewmodelHash() => r'8cc68724a9eeb50c302d0bf8929d04b45fd36727';
+String _$routeViewmodelHash() => r'b0bf60f42e3d4fa828c9e11010a15234608a9ae0';
 
 /// See also [RouteViewmodel].
 @ProviderFor(RouteViewmodel)

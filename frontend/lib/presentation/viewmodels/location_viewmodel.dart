@@ -2,9 +2,9 @@ import 'package:frontend/data/models/location_model.dart';
 import 'package:frontend/data/repositories/location_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'home_viewmodel.g.dart';
+part 'location_viewmodel.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class LocationViewmodel extends _$LocationViewmodel {
   @override
   Future<Location?> build() async {

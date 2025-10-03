@@ -7,7 +7,7 @@ part of 'navigation_viewmodel.dart';
 // **************************************************************************
 
 String _$navigationViewmodelHash() =>
-    r'de262dd595f5a4143e5918dd27caafe32fdec7ef';
+    r'c51e996b5a7bf86ff0d1f4c35e500045ed5fdf0a';
 
 /// See also [NavigationViewmodel].
 @ProviderFor(NavigationViewmodel)

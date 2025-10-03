@@ -19,17 +19,6 @@ class RouteForm extends ConsumerStatefulWidget {
 class _RouteFormState extends ConsumerState<RouteForm> {
   final TextEditingController _startController = TextEditingController();
   final TextEditingController _endController = TextEditingController();
-  Location? _startPlace;
-  Location? _endPlace;
-  bool _isButtonEnabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // 텍스트 변경 감지
-    _startController.addListener(_updateButtonState);
-    _endController.addListener(_updateButtonState);
-  }
 
   @override
   void dispose() {
@@ -38,28 +27,8 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     super.dispose();
   }
 
-  void _updateButtonState() {
-    setState(() {
-      _isButtonEnabled = _startPlace != null && _endPlace != null;
-    });
-  }
-
   void _swapLocations() {
-    final tempPlace = _startPlace;
-    final tempText = _startController.text;
-
-    setState(() {
-      _startPlace = _endPlace;
-      _endPlace = tempPlace;
-      _startController.text = _endController.text;
-      _endController.text = tempText;
-    });
-
-    // Place provider에도 업데이트
-    ref.read(placeSelectViewmodelProvider.notifier).setStartPlace(_startPlace);
-    ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(_endPlace);
-
-    _updateButtonState();
+    ref.read(placeSelectViewmodelProvider.notifier).swapPlaces();
   }
 
   Future<void> _selectStartPlace() async {
@@ -72,15 +41,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     );
 
     if (result != null) {
-      setState(() {
-        _startPlace = result;
-        _startController.text = _startPlace!.placeName;
-      });
-      // Place provider에도 업데이트
-      ref
-          .read(placeSelectViewmodelProvider.notifier)
-          .setStartPlace(_startPlace);
-      _updateButtonState();
+      ref.read(placeSelectViewmodelProvider.notifier).setStartPlace(result);
     }
   }
 
@@ -94,28 +55,17 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     );
 
     if (result != null) {
-      setState(() {
-        _endPlace = result;
-        _endController.text = _endPlace!.placeName;
-      });
-      // Place provider에도 업데이트
-      ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(_endPlace);
-      _updateButtonState();
+      ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(result);
     }
   }
 
   Future<void> _findRoute() async {
-    if (_startPlace == null || _endPlace == null) return;
+    final selectedPlaces = ref.read(placeSelectViewmodelProvider);
+
+    if (selectedPlaces.start == null || selectedPlaces.end == null) return;
 
     try {
-      await ref
-          .read(routeViewmodelProvider.notifier)
-          .searchRoute(
-            startLat: _startPlace!.latitude,
-            startLng: _startPlace!.longitude,
-            endLat: _endPlace!.latitude,
-            endLng: _endPlace!.longitude,
-          );
+      await ref.read(routeViewmodelProvider.notifier).searchRoute();
 
       // 경로 결과 출력
       final routeState = ref.read(routeViewmodelProvider);
@@ -153,6 +103,15 @@ class _RouteFormState extends ConsumerState<RouteForm> {
   Widget build(BuildContext context) {
     final routeState = ref.watch(routeViewmodelProvider);
     final isLoading = routeState.isLoading;
+
+    // TextController를 ViewModel 상태와 동기화
+    final selectedPlaces = ref.watch(placeSelectViewmodelProvider);
+    _startController.text = selectedPlaces.start != null
+        ? selectedPlaces.start!.placeName
+        : '';
+    _endController.text = selectedPlaces.end != null
+        ? selectedPlaces.end!.placeName
+        : '';
 
     return Container(
       height: 200,
@@ -300,7 +259,10 @@ class _RouteFormState extends ConsumerState<RouteForm> {
             width: double.infinity,
             height: 56,
             decoration: ShapeDecoration(
-              gradient: (_isButtonEnabled && !isLoading)
+              gradient:
+                  (selectedPlaces.start != null &&
+                      selectedPlaces.end != null &&
+                      !isLoading)
                   ? LinearGradient(
                       begin: Alignment(1.00, 0.50),
                       end: Alignment(0.00, 0.50),
@@ -310,7 +272,10 @@ class _RouteFormState extends ConsumerState<RouteForm> {
                       ],
                     )
                   : null,
-              color: (_isButtonEnabled && !isLoading)
+              color:
+                  (selectedPlaces.start != null &&
+                      selectedPlaces.end != null &&
+                      !isLoading)
                   ? null
                   : const Color(0xFFE5E7EB),
               shape: RoundedRectangleBorder(
@@ -321,7 +286,12 @@ class _RouteFormState extends ConsumerState<RouteForm> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap: (_isButtonEnabled && !isLoading) ? _findRoute : null,
+                onTap:
+                    (selectedPlaces.start != null &&
+                        selectedPlaces.end != null &&
+                        !isLoading)
+                    ? _findRoute
+                    : null,
                 child: Center(
                   child: isLoading
                       ? SizedBox(
@@ -338,7 +308,10 @@ class _RouteFormState extends ConsumerState<RouteForm> {
                           '길찾기',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: (_isButtonEnabled && !isLoading)
+                            color:
+                                (selectedPlaces.start != null &&
+                                    selectedPlaces.end != null &&
+                                    !isLoading)
                                 ? Colors.white
                                 : const Color(0xFF9CA3AF),
                             fontSize: 18,

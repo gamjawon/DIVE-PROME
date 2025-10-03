@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/data/models/location_model.dart';
 import 'package:frontend/presentation/utils/palette.dart';
-import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
 import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
+import 'package:frontend/presentation/views/search/widgets/place_item.dart';
 
 class PlaceSearchScreen extends ConsumerStatefulWidget {
   final String title;
@@ -33,24 +33,11 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
     ref.read(placeSearchViewmodelProvider.notifier).searchPlaces(query);
   }
 
-  void _selectPlace(Location place) {
-    Navigator.pop(context, place);
-    print(place);
-  }
-
   void _selectCurrentLocation() {
     final locationState = ref.read(locationViewmodelProvider);
     locationState.whenData((location) {
       if (location != null) {
-        final currentLocationPlace = Location(
-          placeName: '현재 위치',
-          addressName: location.addressName,
-          roadAddressName: location.roadAddressName,
-          longitude: location.longitude,
-          latitude: location.latitude,
-          categoryName: '현재위치',
-        );
-        Navigator.pop(context, currentLocationPlace);
+        Navigator.pop(context, locationState.value);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -168,15 +155,10 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
 
   Widget _buildSearchResults() {
     final placeSearchResponse = ref.watch(placeSearchViewmodelProvider);
-    final searchState = placeSearchResponse.when(
-      data: (response) => AsyncValue.data(response?.documents ?? []),
-      loading: () => const AsyncValue<List<Location>>.loading(),
-      error: (error, stackTrace) =>
-          AsyncValue<List<Location>>.error(error, stackTrace),
-    );
 
-    return searchState.when(
+    return placeSearchResponse.when(
       data: (searchResults) {
+        // 검색어 없음
         if (_searchController.text.trim().isEmpty) {
           return Center(
             child: Column(
@@ -206,7 +188,8 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
           );
         }
 
-        if (searchResults.isEmpty) {
+        // 검색 결과 없음
+        if (searchResults == null || searchResults.documents.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -228,11 +211,11 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
         }
 
         return ListView.builder(
-          itemCount: searchResults.length,
+          itemCount: searchResults.documents.length,
           padding: EdgeInsets.symmetric(horizontal: 24),
           itemBuilder: (context, index) {
-            final place = searchResults[index];
-            return _buildPlaceItem(place);
+            final place = searchResults.documents[index];
+            return PlaceItem(place: place);
           },
         );
       },
@@ -248,67 +231,6 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
             fontFamily: 'Pretendard',
             fontWeight: FontWeight.w500,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceItem(Location place) {
-    return InkWell(
-      onTap: () => _selectPlace(place),
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        margin: EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Color(0xFFE5E5E5)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.location_on,
-                color: Palette.primaryAccentColor,
-                size: 20,
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    place.placeName,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (place.addressName.isNotEmpty) ...[
-                    SizedBox(height: 4),
-                    Text(
-                      place.addressName,
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                        fontSize: 14,
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

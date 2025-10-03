@@ -7,7 +7,7 @@ part of 'place_select_viewmodel.dart';
 // **************************************************************************
 
 String _$placeSelectViewmodelHash() =>
-    r'7d9de3300cb8d3e8ccc67ec13e0cd800032ad765';
+    r'ad6090c6601aadf565ddaa3191dbaa0f378ac653';
 
 /// See also [PlaceSelectViewmodel].
 @ProviderFor(PlaceSelectViewmodel)

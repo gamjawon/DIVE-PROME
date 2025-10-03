@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/presentation/viewmodels/home_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class KakaoMapBackground extends ConsumerStatefulWidget {
