@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:frontend/presentation/utils/palette.dart';
-import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/current_location_viewmodel.dart';
 import 'package:frontend/presentation/viewmodels/place_search_viewmodel.dart';
 import 'package:frontend/presentation/views/search/widgets/place_item.dart';
 
@@ -34,19 +34,21 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
   }
 
   void _selectCurrentLocation() {
-    final locationState = ref.read(locationViewmodelProvider);
-    locationState.whenData((location) {
-      if (location != null) {
-        Navigator.pop(context, locationState.value);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('현재 위치 정보를 가져올 수 없습니다.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
+    final currentLocationStateAsync = ref.read(
+      currentLocationViewmodelProvider,
+    );
+    currentLocationStateAsync.when(
+      data: (location) {
+        Navigator.pop(context, location);
+      },
+      error: (_, _) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('현재 위치 정보를 가져올 수 없습니다.'),
+          backgroundColor: Colors.red,
+        ),
+      ),
+      loading: () {},
+    );
   }
 
   @override
@@ -189,7 +191,7 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
         }
 
         // 검색 결과 없음
-        if (searchResults == null || searchResults.documents.isEmpty) {
+        if (searchResults.items.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -211,10 +213,10 @@ class _PlaceSearchScreenState extends ConsumerState<PlaceSearchScreen> {
         }
 
         return ListView.builder(
-          itemCount: searchResults.documents.length,
+          itemCount: searchResults.items.length,
           padding: EdgeInsets.symmetric(horizontal: 24),
           itemBuilder: (context, index) {
-            final place = searchResults.documents[index];
+            final place = searchResults.items[index];
             return PlaceItem(place: place);
           },
         );

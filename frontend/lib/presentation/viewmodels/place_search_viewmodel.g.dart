@@ -7,14 +7,14 @@ part of 'place_search_viewmodel.dart';
 // **************************************************************************
 
 String _$placeSearchViewmodelHash() =>
-    r'8f341e2eee03fbf6ba1a21dfa842e61c9c45fd10';
+    r'f9a0f7a2ce9c119d5622148534018faf8b895a37';
 
 /// See also [PlaceSearchViewmodel].
 @ProviderFor(PlaceSearchViewmodel)
 final placeSearchViewmodelProvider =
-    AutoDisposeNotifierProvider<
+    AutoDisposeAsyncNotifierProvider<
       PlaceSearchViewmodel,
-      AsyncValue<PlaceSearchResponse?>
+      SearchResult<Location>
     >.internal(
       PlaceSearchViewmodel.new,
       name: r'placeSearchViewmodelProvider',
@@ -26,6 +26,6 @@ final placeSearchViewmodelProvider =
     );
 
 typedef _$PlaceSearchViewmodel =
-    AutoDisposeNotifier<AsyncValue<PlaceSearchResponse?>>;
+    AutoDisposeAsyncNotifier<SearchResult<Location>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

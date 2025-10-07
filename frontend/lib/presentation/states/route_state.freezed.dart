@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RouteState {
 
- RouteOption get selectedOption; List<RouteInfo>? get routeList;
+ Location? get start; Location? get end; RouteOption get selectedOption; List<RouteInfo> get routes;
 /// Create a copy of RouteState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RouteStateCopyWith<RouteState> get copyWith => _$RouteStateCopyWithImpl<RouteSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RouteState&&(identical(other.selectedOption, selectedOption) || other.selectedOption == selectedOption)&&const DeepCollectionEquality().equals(other.routeList, routeList));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RouteState&&(identical(other.start, start) || other.start == start)&&(identical(other.end, end) || other.end == end)&&(identical(other.selectedOption, selectedOption) || other.selectedOption == selectedOption)&&const DeepCollectionEquality().equals(other.routes, routes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,selectedOption,const DeepCollectionEquality().hash(routeList));
+int get hashCode => Object.hash(runtimeType,start,end,selectedOption,const DeepCollectionEquality().hash(routes));
 
 @override
 String toString() {
-  return 'RouteState(selectedOption: $selectedOption, routeList: $routeList)';
+  return 'RouteState(start: $start, end: $end, selectedOption: $selectedOption, routes: $routes)';
 }
 
 
@@ -45,11 +45,11 @@ abstract mixin class $RouteStateCopyWith<$Res>  {
   factory $RouteStateCopyWith(RouteState value, $Res Function(RouteState) _then) = _$RouteStateCopyWithImpl;
 @useResult
 $Res call({
- RouteOption selectedOption, List<RouteInfo>? routeList
+ Location? start, Location? end, RouteOption selectedOption, List<RouteInfo> routes
 });
 
 
-
+$LocationCopyWith<$Res>? get start;$LocationCopyWith<$Res>? get end;
 
 }
 /// @nodoc
@@ -62,14 +62,40 @@ class _$RouteStateCopyWithImpl<$Res>
 
 /// Create a copy of RouteState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? selectedOption = null,Object? routeList = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? start = freezed,Object? end = freezed,Object? selectedOption = null,Object? routes = null,}) {
   return _then(_self.copyWith(
-selectedOption: null == selectedOption ? _self.selectedOption : selectedOption // ignore: cast_nullable_to_non_nullable
-as RouteOption,routeList: freezed == routeList ? _self.routeList : routeList // ignore: cast_nullable_to_non_nullable
-as List<RouteInfo>?,
+start: freezed == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as Location?,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
+as Location?,selectedOption: null == selectedOption ? _self.selectedOption : selectedOption // ignore: cast_nullable_to_non_nullable
+as RouteOption,routes: null == routes ? _self.routes : routes // ignore: cast_nullable_to_non_nullable
+as List<RouteInfo>,
   ));
 }
+/// Create a copy of RouteState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res>? get start {
+    if (_self.start == null) {
+    return null;
+  }
 
+  return $LocationCopyWith<$Res>(_self.start!, (value) {
+    return _then(_self.copyWith(start: value));
+  });
+}/// Create a copy of RouteState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res>? get end {
+    if (_self.end == null) {
+    return null;
+  }
+
+  return $LocationCopyWith<$Res>(_self.end!, (value) {
+    return _then(_self.copyWith(end: value));
+  });
+}
 }
 
 
@@ -151,10 +177,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( RouteOption selectedOption,  List<RouteInfo>? routeList)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( Location? start,  Location? end,  RouteOption selectedOption,  List<RouteInfo> routes)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _SelectedRoute() when $default != null:
-return $default(_that.selectedOption,_that.routeList);case _:
+return $default(_that.start,_that.end,_that.selectedOption,_that.routes);case _:
   return orElse();
 
 }
@@ -172,10 +198,10 @@ return $default(_that.selectedOption,_that.routeList);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( RouteOption selectedOption,  List<RouteInfo>? routeList)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( Location? start,  Location? end,  RouteOption selectedOption,  List<RouteInfo> routes)  $default,) {final _that = this;
 switch (_that) {
 case _SelectedRoute():
-return $default(_that.selectedOption,_that.routeList);case _:
+return $default(_that.start,_that.end,_that.selectedOption,_that.routes);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +218,10 @@ return $default(_that.selectedOption,_that.routeList);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( RouteOption selectedOption,  List<RouteInfo>? routeList)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( Location? start,  Location? end,  RouteOption selectedOption,  List<RouteInfo> routes)?  $default,) {final _that = this;
 switch (_that) {
 case _SelectedRoute() when $default != null:
-return $default(_that.selectedOption,_that.routeList);case _:
+return $default(_that.start,_that.end,_that.selectedOption,_that.routes);case _:
   return null;
 
 }
@@ -207,17 +233,17 @@ return $default(_that.selectedOption,_that.routeList);case _:
 
 
 class _SelectedRoute implements RouteState {
-  const _SelectedRoute({required this.selectedOption, required final  List<RouteInfo>? routeList}): _routeList = routeList;
+  const _SelectedRoute({this.start, this.end, required this.selectedOption, required final  List<RouteInfo> routes}): _routes = routes;
   
 
+@override final  Location? start;
+@override final  Location? end;
 @override final  RouteOption selectedOption;
- final  List<RouteInfo>? _routeList;
-@override List<RouteInfo>? get routeList {
-  final value = _routeList;
-  if (value == null) return null;
-  if (_routeList is EqualUnmodifiableListView) return _routeList;
+ final  List<RouteInfo> _routes;
+@override List<RouteInfo> get routes {
+  if (_routes is EqualUnmodifiableListView) return _routes;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(value);
+  return EqualUnmodifiableListView(_routes);
 }
 
 
@@ -231,16 +257,16 @@ _$SelectedRouteCopyWith<_SelectedRoute> get copyWith => __$SelectedRouteCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SelectedRoute&&(identical(other.selectedOption, selectedOption) || other.selectedOption == selectedOption)&&const DeepCollectionEquality().equals(other._routeList, _routeList));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SelectedRoute&&(identical(other.start, start) || other.start == start)&&(identical(other.end, end) || other.end == end)&&(identical(other.selectedOption, selectedOption) || other.selectedOption == selectedOption)&&const DeepCollectionEquality().equals(other._routes, _routes));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,selectedOption,const DeepCollectionEquality().hash(_routeList));
+int get hashCode => Object.hash(runtimeType,start,end,selectedOption,const DeepCollectionEquality().hash(_routes));
 
 @override
 String toString() {
-  return 'RouteState(selectedOption: $selectedOption, routeList: $routeList)';
+  return 'RouteState(start: $start, end: $end, selectedOption: $selectedOption, routes: $routes)';
 }
 
 
@@ -251,11 +277,11 @@ abstract mixin class _$SelectedRouteCopyWith<$Res> implements $RouteStateCopyWit
   factory _$SelectedRouteCopyWith(_SelectedRoute value, $Res Function(_SelectedRoute) _then) = __$SelectedRouteCopyWithImpl;
 @override @useResult
 $Res call({
- RouteOption selectedOption, List<RouteInfo>? routeList
+ Location? start, Location? end, RouteOption selectedOption, List<RouteInfo> routes
 });
 
 
-
+@override $LocationCopyWith<$Res>? get start;@override $LocationCopyWith<$Res>? get end;
 
 }
 /// @nodoc
@@ -268,15 +294,41 @@ class __$SelectedRouteCopyWithImpl<$Res>
 
 /// Create a copy of RouteState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? selectedOption = null,Object? routeList = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? start = freezed,Object? end = freezed,Object? selectedOption = null,Object? routes = null,}) {
   return _then(_SelectedRoute(
-selectedOption: null == selectedOption ? _self.selectedOption : selectedOption // ignore: cast_nullable_to_non_nullable
-as RouteOption,routeList: freezed == routeList ? _self._routeList : routeList // ignore: cast_nullable_to_non_nullable
-as List<RouteInfo>?,
+start: freezed == start ? _self.start : start // ignore: cast_nullable_to_non_nullable
+as Location?,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
+as Location?,selectedOption: null == selectedOption ? _self.selectedOption : selectedOption // ignore: cast_nullable_to_non_nullable
+as RouteOption,routes: null == routes ? _self._routes : routes // ignore: cast_nullable_to_non_nullable
+as List<RouteInfo>,
   ));
 }
 
+/// Create a copy of RouteState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res>? get start {
+    if (_self.start == null) {
+    return null;
+  }
 
+  return $LocationCopyWith<$Res>(_self.start!, (value) {
+    return _then(_self.copyWith(start: value));
+  });
+}/// Create a copy of RouteState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res>? get end {
+    if (_self.end == null) {
+    return null;
+  }
+
+  return $LocationCopyWith<$Res>(_self.end!, (value) {
+    return _then(_self.copyWith(end: value));
+  });
+}
 }
 
 // dart format on

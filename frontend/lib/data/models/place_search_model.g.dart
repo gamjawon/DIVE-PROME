@@ -8,11 +8,11 @@ part of 'place_search_model.dart';
 
 _PlaceSearchResponse _$PlaceSearchResponseFromJson(Map<String, dynamic> json) =>
     _PlaceSearchResponse(
-      documents: (json['documents'] as List<dynamic>)
-          .map((e) => Location.fromJson(e as Map<String, dynamic>))
+      places: (json['documents'] as List<dynamic>)
+          .map((e) => LocationModel.fromJson(e as Map<String, dynamic>))
           .toList(),
     );
 
 Map<String, dynamic> _$PlaceSearchResponseToJson(
   _PlaceSearchResponse instance,
-) => <String, dynamic>{'documents': instance.documents};
+) => <String, dynamic>{'documents': instance.places};

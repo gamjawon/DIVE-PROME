@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/domain/enums/route_option.dart';
 import 'package:frontend/presentation/utils/palette.dart';
 import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:frontend/presentation/views/navigation/navigation_screen.dart';
@@ -84,14 +84,12 @@ class RouteBottomContainer extends ConsumerWidget {
 
     return routeStateAsync.when(
       data: (routeState) {
-        if (routeState.routeList == null) return SizedBox.shrink();
+        final routes = routeState.routes;
+        if (routes.isEmpty) return SizedBox.shrink();
 
-        final routeList = routeState.routeList!;
-        if (routeList.isEmpty) return SizedBox.shrink();
-
-        final selectedRoute = routeList.firstWhere(
+        final selectedRoute = routes.firstWhere(
           (route) => route.option == routeState.selectedOption,
-          orElse: () => routeList.first,
+          orElse: () => routes.first,
         );
 
         return Positioned(

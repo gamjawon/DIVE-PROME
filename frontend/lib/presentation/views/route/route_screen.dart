@@ -22,7 +22,7 @@ class _RouteViewScreenState extends ConsumerState<RouteScreen> {
         children: [
           routeState.when(
             data: (state) {
-              if (state.routeList == null || state.routeList!.isEmpty) {
+              if (state.routes.isEmpty) {
                 return const Center(child: Text('경로 데이터가 없습니다.'));
               }
 

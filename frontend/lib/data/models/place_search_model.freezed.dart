@@ -11,44 +11,51 @@ part of 'place_search_model.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
+PlaceSearchModel _$PlaceSearchModelFromJson(
+  Map<String, dynamic> json
+) {
+    return _PlaceSearchResponse.fromJson(
+      json
+    );
+}
 
 /// @nodoc
-mixin _$PlaceSearchResponse {
+mixin _$PlaceSearchModel {
 
- List<Location> get documents;
-/// Create a copy of PlaceSearchResponse
+@JsonKey(name: 'documents') List<LocationModel> get places;
+/// Create a copy of PlaceSearchModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PlaceSearchResponseCopyWith<PlaceSearchResponse> get copyWith => _$PlaceSearchResponseCopyWithImpl<PlaceSearchResponse>(this as PlaceSearchResponse, _$identity);
+$PlaceSearchModelCopyWith<PlaceSearchModel> get copyWith => _$PlaceSearchModelCopyWithImpl<PlaceSearchModel>(this as PlaceSearchModel, _$identity);
 
-  /// Serializes this PlaceSearchResponse to a JSON map.
+  /// Serializes this PlaceSearchModel to a JSON map.
   Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceSearchResponse&&const DeepCollectionEquality().equals(other.documents, documents));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlaceSearchModel&&const DeepCollectionEquality().equals(other.places, places));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(documents));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(places));
 
 @override
 String toString() {
-  return 'PlaceSearchResponse(documents: $documents)';
+  return 'PlaceSearchModel(places: $places)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $PlaceSearchResponseCopyWith<$Res>  {
-  factory $PlaceSearchResponseCopyWith(PlaceSearchResponse value, $Res Function(PlaceSearchResponse) _then) = _$PlaceSearchResponseCopyWithImpl;
+abstract mixin class $PlaceSearchModelCopyWith<$Res>  {
+  factory $PlaceSearchModelCopyWith(PlaceSearchModel value, $Res Function(PlaceSearchModel) _then) = _$PlaceSearchModelCopyWithImpl;
 @useResult
 $Res call({
- List<Location> documents
+@JsonKey(name: 'documents') List<LocationModel> places
 });
 
 
@@ -56,27 +63,27 @@ $Res call({
 
 }
 /// @nodoc
-class _$PlaceSearchResponseCopyWithImpl<$Res>
-    implements $PlaceSearchResponseCopyWith<$Res> {
-  _$PlaceSearchResponseCopyWithImpl(this._self, this._then);
+class _$PlaceSearchModelCopyWithImpl<$Res>
+    implements $PlaceSearchModelCopyWith<$Res> {
+  _$PlaceSearchModelCopyWithImpl(this._self, this._then);
 
-  final PlaceSearchResponse _self;
-  final $Res Function(PlaceSearchResponse) _then;
+  final PlaceSearchModel _self;
+  final $Res Function(PlaceSearchModel) _then;
 
-/// Create a copy of PlaceSearchResponse
+/// Create a copy of PlaceSearchModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? documents = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? places = null,}) {
   return _then(_self.copyWith(
-documents: null == documents ? _self.documents : documents // ignore: cast_nullable_to_non_nullable
-as List<Location>,
+places: null == places ? _self.places : places // ignore: cast_nullable_to_non_nullable
+as List<LocationModel>,
   ));
 }
 
 }
 
 
-/// Adds pattern-matching-related methods to [PlaceSearchResponse].
-extension PlaceSearchResponsePatterns on PlaceSearchResponse {
+/// Adds pattern-matching-related methods to [PlaceSearchModel].
+extension PlaceSearchModelPatterns on PlaceSearchModel {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -153,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Location> documents)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'documents')  List<LocationModel> places)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PlaceSearchResponse() when $default != null:
-return $default(_that.documents);case _:
+return $default(_that.places);case _:
   return orElse();
 
 }
@@ -174,10 +181,10 @@ return $default(_that.documents);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Location> documents)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'documents')  List<LocationModel> places)  $default,) {final _that = this;
 switch (_that) {
 case _PlaceSearchResponse():
-return $default(_that.documents);case _:
+return $default(_that.places);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +201,10 @@ return $default(_that.documents);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Location> documents)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'documents')  List<LocationModel> places)?  $default,) {final _that = this;
 switch (_that) {
 case _PlaceSearchResponse() when $default != null:
-return $default(_that.documents);case _:
+return $default(_that.places);case _:
   return null;
 
 }
@@ -208,19 +215,19 @@ return $default(_that.documents);case _:
 /// @nodoc
 @JsonSerializable()
 
-class _PlaceSearchResponse implements PlaceSearchResponse {
-  const _PlaceSearchResponse({required final  List<Location> documents}): _documents = documents;
+class _PlaceSearchResponse implements PlaceSearchModel {
+  const _PlaceSearchResponse({@JsonKey(name: 'documents') required final  List<LocationModel> places}): _places = places;
   factory _PlaceSearchResponse.fromJson(Map<String, dynamic> json) => _$PlaceSearchResponseFromJson(json);
 
- final  List<Location> _documents;
-@override List<Location> get documents {
-  if (_documents is EqualUnmodifiableListView) return _documents;
+ final  List<LocationModel> _places;
+@override@JsonKey(name: 'documents') List<LocationModel> get places {
+  if (_places is EqualUnmodifiableListView) return _places;
   // ignore: implicit_dynamic_type
-  return EqualUnmodifiableListView(_documents);
+  return EqualUnmodifiableListView(_places);
 }
 
 
-/// Create a copy of PlaceSearchResponse
+/// Create a copy of PlaceSearchModel
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -233,27 +240,27 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlaceSearchResponse&&const DeepCollectionEquality().equals(other._documents, _documents));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlaceSearchResponse&&const DeepCollectionEquality().equals(other._places, _places));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_documents));
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_places));
 
 @override
 String toString() {
-  return 'PlaceSearchResponse(documents: $documents)';
+  return 'PlaceSearchModel(places: $places)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$PlaceSearchResponseCopyWith<$Res> implements $PlaceSearchResponseCopyWith<$Res> {
+abstract mixin class _$PlaceSearchResponseCopyWith<$Res> implements $PlaceSearchModelCopyWith<$Res> {
   factory _$PlaceSearchResponseCopyWith(_PlaceSearchResponse value, $Res Function(_PlaceSearchResponse) _then) = __$PlaceSearchResponseCopyWithImpl;
 @override @useResult
 $Res call({
- List<Location> documents
+@JsonKey(name: 'documents') List<LocationModel> places
 });
 
 
@@ -268,12 +275,12 @@ class __$PlaceSearchResponseCopyWithImpl<$Res>
   final _PlaceSearchResponse _self;
   final $Res Function(_PlaceSearchResponse) _then;
 
-/// Create a copy of PlaceSearchResponse
+/// Create a copy of PlaceSearchModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? documents = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? places = null,}) {
   return _then(_PlaceSearchResponse(
-documents: null == documents ? _self._documents : documents // ignore: cast_nullable_to_non_nullable
-as List<Location>,
+places: null == places ? _self._places : places // ignore: cast_nullable_to_non_nullable
+as List<LocationModel>,
   ));
 }
 

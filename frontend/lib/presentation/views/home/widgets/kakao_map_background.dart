@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/current_location_viewmodel.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
 class KakaoMapBackground extends ConsumerStatefulWidget {
@@ -15,26 +15,16 @@ class _KakaoMapBackgroundState extends ConsumerState<KakaoMapBackground> {
   KakaoMapController? _mapController;
 
   @override
-  void initState() {
-    super.initState();
-    // 화면 초기 렌더 후 위치 가져오기
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final notifier = ref.read(locationViewmodelProvider.notifier);
-      if (ref.read(locationViewmodelProvider).value == null) {
-        notifier.refresh();
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final locationState = ref.watch(locationViewmodelProvider);
+    final currentLocationStateAsync = ref.watch(
+      currentLocationViewmodelProvider,
+    );
     // 위치 갱신되면 지도 이동
-    locationState.whenData((location) {
+    currentLocationStateAsync.whenData((location) {
       if (_mapController != null) {
         _mapController!.moveCamera(
           CameraUpdate.newCenterPosition(
-            LatLng(location!.latitude, location.longitude),
+            LatLng(location.latitude, location.longitude),
           ),
         );
       }

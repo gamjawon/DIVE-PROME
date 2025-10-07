@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'location_model.dart';
+part of 'location.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -11,51 +11,41 @@ part of 'location_model.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-LocationModel _$LocationModelFromJson(
-  Map<String, dynamic> json
-) {
-    return _Location.fromJson(
-      json
-    );
-}
-
 /// @nodoc
-mixin _$LocationModel {
+mixin _$Location {
 
-@JsonKey(name: 'y', fromJson: JsonConverters.toDouble) double get latitude;@JsonKey(name: 'x', fromJson: JsonConverters.toDouble) double get longitude;@JsonKey(name: 'place_name') String? get placeName;@JsonKey(name: 'address_name') String? get addressName;
-/// Create a copy of LocationModel
+ double get latitude; double get longitude; String get placeName; String get addressName;
+/// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$LocationModelCopyWith<LocationModel> get copyWith => _$LocationModelCopyWithImpl<LocationModel>(this as LocationModel, _$identity);
+$LocationCopyWith<Location> get copyWith => _$LocationCopyWithImpl<Location>(this as Location, _$identity);
 
-  /// Serializes this LocationModel to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is LocationModel&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName);
 
 @override
 String toString() {
-  return 'LocationModel(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName)';
+  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $LocationModelCopyWith<$Res>  {
-  factory $LocationModelCopyWith(LocationModel value, $Res Function(LocationModel) _then) = _$LocationModelCopyWithImpl;
+abstract mixin class $LocationCopyWith<$Res>  {
+  factory $LocationCopyWith(Location value, $Res Function(Location) _then) = _$LocationCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'y', fromJson: JsonConverters.toDouble) double latitude,@JsonKey(name: 'x', fromJson: JsonConverters.toDouble) double longitude,@JsonKey(name: 'place_name') String? placeName,@JsonKey(name: 'address_name') String? addressName
+ double latitude, double longitude, String placeName, String addressName
 });
 
 
@@ -63,30 +53,30 @@ $Res call({
 
 }
 /// @nodoc
-class _$LocationModelCopyWithImpl<$Res>
-    implements $LocationModelCopyWith<$Res> {
-  _$LocationModelCopyWithImpl(this._self, this._then);
+class _$LocationCopyWithImpl<$Res>
+    implements $LocationCopyWith<$Res> {
+  _$LocationCopyWithImpl(this._self, this._then);
 
-  final LocationModel _self;
-  final $Res Function(LocationModel) _then;
+  final Location _self;
+  final $Res Function(Location) _then;
 
-/// Create a copy of LocationModel
+/// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = freezed,Object? addressName = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,}) {
   return _then(_self.copyWith(
 latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double,placeName: freezed == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
-as String?,addressName: freezed == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
-as String?,
+as double,placeName: null == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
+as String,addressName: null == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 
 }
 
 
-/// Adds pattern-matching-related methods to [LocationModel].
-extension LocationModelPatterns on LocationModel {
+/// Adds pattern-matching-related methods to [Location].
+extension LocationPatterns on Location {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -163,7 +153,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: JsonConverters.toDouble)  double latitude, @JsonKey(name: 'x', fromJson: JsonConverters.toDouble)  double longitude, @JsonKey(name: 'place_name')  String? placeName, @JsonKey(name: 'address_name')  String? addressName)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double latitude,  double longitude,  String placeName,  String addressName)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Location() when $default != null:
 return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName);case _:
@@ -184,7 +174,7 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'y', fromJson: JsonConverters.toDouble)  double latitude, @JsonKey(name: 'x', fromJson: JsonConverters.toDouble)  double longitude, @JsonKey(name: 'place_name')  String? placeName, @JsonKey(name: 'address_name')  String? addressName)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double latitude,  double longitude,  String placeName,  String addressName)  $default,) {final _that = this;
 switch (_that) {
 case _Location():
 return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName);case _:
@@ -204,7 +194,7 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'y', fromJson: JsonConverters.toDouble)  double latitude, @JsonKey(name: 'x', fromJson: JsonConverters.toDouble)  double longitude, @JsonKey(name: 'place_name')  String? placeName, @JsonKey(name: 'address_name')  String? addressName)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double latitude,  double longitude,  String placeName,  String addressName)?  $default,) {final _that = this;
 switch (_that) {
 case _Location() when $default != null:
 return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName);case _:
@@ -216,51 +206,48 @@ return $default(_that.latitude,_that.longitude,_that.placeName,_that.addressName
 }
 
 /// @nodoc
-@JsonSerializable()
 
-class _Location implements LocationModel {
-  const _Location({@JsonKey(name: 'y', fromJson: JsonConverters.toDouble) required this.latitude, @JsonKey(name: 'x', fromJson: JsonConverters.toDouble) required this.longitude, @JsonKey(name: 'place_name') this.placeName, @JsonKey(name: 'address_name') this.addressName});
-  factory _Location.fromJson(Map<String, dynamic> json) => _$LocationFromJson(json);
 
-@override@JsonKey(name: 'y', fromJson: JsonConverters.toDouble) final  double latitude;
-@override@JsonKey(name: 'x', fromJson: JsonConverters.toDouble) final  double longitude;
-@override@JsonKey(name: 'place_name') final  String? placeName;
-@override@JsonKey(name: 'address_name') final  String? addressName;
+class _Location implements Location {
+  const _Location({required this.latitude, required this.longitude, required this.placeName, required this.addressName});
+  
 
-/// Create a copy of LocationModel
+@override final  double latitude;
+@override final  double longitude;
+@override final  String placeName;
+@override final  String addressName;
+
+/// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
 @override @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 _$LocationCopyWith<_Location> get copyWith => __$LocationCopyWithImpl<_Location>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$LocationToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _Location&&(identical(other.latitude, latitude) || other.latitude == latitude)&&(identical(other.longitude, longitude) || other.longitude == longitude)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.addressName, addressName) || other.addressName == addressName));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,latitude,longitude,placeName,addressName);
 
 @override
 String toString() {
-  return 'LocationModel(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName)';
+  return 'Location(latitude: $latitude, longitude: $longitude, placeName: $placeName, addressName: $addressName)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class _$LocationCopyWith<$Res> implements $LocationModelCopyWith<$Res> {
+abstract mixin class _$LocationCopyWith<$Res> implements $LocationCopyWith<$Res> {
   factory _$LocationCopyWith(_Location value, $Res Function(_Location) _then) = __$LocationCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'y', fromJson: JsonConverters.toDouble) double latitude,@JsonKey(name: 'x', fromJson: JsonConverters.toDouble) double longitude,@JsonKey(name: 'place_name') String? placeName,@JsonKey(name: 'address_name') String? addressName
+ double latitude, double longitude, String placeName, String addressName
 });
 
 
@@ -275,15 +262,15 @@ class __$LocationCopyWithImpl<$Res>
   final _Location _self;
   final $Res Function(_Location) _then;
 
-/// Create a copy of LocationModel
+/// Create a copy of Location
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = freezed,Object? addressName = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? latitude = null,Object? longitude = null,Object? placeName = null,Object? addressName = null,}) {
   return _then(_Location(
 latitude: null == latitude ? _self.latitude : latitude // ignore: cast_nullable_to_non_nullable
 as double,longitude: null == longitude ? _self.longitude : longitude // ignore: cast_nullable_to_non_nullable
-as double,placeName: freezed == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
-as String?,addressName: freezed == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
-as String?,
+as double,placeName: null == placeName ? _self.placeName : placeName // ignore: cast_nullable_to_non_nullable
+as String,addressName: null == addressName ? _self.addressName : addressName // ignore: cast_nullable_to_non_nullable
+as String,
   ));
 }
 

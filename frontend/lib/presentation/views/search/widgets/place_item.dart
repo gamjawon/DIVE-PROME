@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/data/models/location_model.dart';
+import 'package:frontend/domain/entities/location.dart';
 import 'package:frontend/presentation/utils/palette.dart';
 
 class PlaceItem extends StatelessWidget {
@@ -9,7 +9,6 @@ class PlaceItem extends StatelessWidget {
 
   void _selectPlace(BuildContext context, Location place) {
     Navigator.pop(context, place);
-    print(place);
   }
 
   @override
@@ -53,18 +52,16 @@ class PlaceItem extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (place.addressName.isNotEmpty) ...[
-                    SizedBox(height: 4),
-                    Text(
-                      place.addressName,
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                        fontSize: 14,
-                        fontFamily: 'Pretendard',
-                        fontWeight: FontWeight.w400,
-                      ),
+                  SizedBox(height: 4),
+                  Text(
+                    place.addressName,
+                    style: TextStyle(
+                      color: Color(0xFF666666),
+                      fontSize: 14,
+                      fontFamily: 'Pretendard',
+                      fontWeight: FontWeight.w400,
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),

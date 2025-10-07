@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/presentation/viewmodels/location_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/current_location_viewmodel.dart';
 
 class TopStatusBar extends ConsumerWidget {
   const TopStatusBar({super.key, required this.screenWidth});
@@ -10,7 +10,9 @@ class TopStatusBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locationState = ref.watch(locationViewmodelProvider);
+    final currentLocationStateAsync = ref.watch(
+      currentLocationViewmodelProvider,
+    );
 
     return Container(
       width: screenWidth,
@@ -72,9 +74,8 @@ class TopStatusBar extends ConsumerWidget {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    locationState.when(
-                      data: (location) =>
-                          location == null ? '위치 정보 없음' : location.addressName,
+                    currentLocationStateAsync.when(
+                      data: (location) => location.addressName,
                       error: (error, stackTrace) => 'Error: $error',
                       loading: () => 'Loading...',
                     ),

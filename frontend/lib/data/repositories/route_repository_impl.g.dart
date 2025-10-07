@@ -6,11 +6,11 @@ part of 'route_repository_impl.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$routeRepositoryHash() => r'2cdea672da9cca0a590389d3d990ae1ed9211f7b';
+String _$routeRepositoryHash() => r'b390c8147e95e0f1a218d9480525aa55c7a4b9a4';
 
 /// See also [routeRepository].
 @ProviderFor(routeRepository)
-final routeRepositoryProvider = Provider<RouteRepositoryImpl>.internal(
+final routeRepositoryProvider = AutoDisposeProvider<RouteRepository>.internal(
   routeRepository,
   name: r'routeRepositoryProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -22,6 +22,6 @@ final routeRepositoryProvider = Provider<RouteRepositoryImpl>.internal(
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef RouteRepositoryRef = ProviderRef<RouteRepositoryImpl>;
+typedef RouteRepositoryRef = AutoDisposeProviderRef<RouteRepository>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

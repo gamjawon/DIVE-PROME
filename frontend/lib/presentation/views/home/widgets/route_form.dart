@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:frontend/data/models/location_model.dart';
-import 'package:frontend/presentation/viewmodels/place_select_viewmodel.dart';
+import 'package:frontend/domain/entities/location.dart';
 import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 import 'package:frontend/presentation/views/route/route_screen.dart';
 import 'package:frontend/presentation/views/search/place_search_screen.dart';
@@ -28,7 +27,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
   }
 
   void _swapLocations() {
-    ref.read(placeSelectViewmodelProvider.notifier).swapPlaces();
+    ref.read(routeViewmodelProvider.notifier).swapPlaces();
   }
 
   Future<void> _selectStartPlace() async {
@@ -41,7 +40,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     );
 
     if (result != null) {
-      ref.read(placeSelectViewmodelProvider.notifier).setStartPlace(result);
+      ref.read(routeViewmodelProvider.notifier).setStartPlace(result);
     }
   }
 
@@ -55,63 +54,57 @@ class _RouteFormState extends ConsumerState<RouteForm> {
     );
 
     if (result != null) {
-      ref.read(placeSelectViewmodelProvider.notifier).setEndPlace(result);
+      ref.read(routeViewmodelProvider.notifier).setEndPlace(result);
     }
   }
 
-  Future<void> _findRoute() async {
-    final selectedPlaces = ref.read(placeSelectViewmodelProvider);
-
-    if (selectedPlaces.start == null || selectedPlaces.end == null) return;
-
-    try {
-      await ref.read(routeViewmodelProvider.notifier).searchRoute();
-
-      // 경로 결과 출력
-      final routeState = ref.read(routeViewmodelProvider);
-      routeState.whenData((state) {
-        final routeList = state.routeList;
-        if (routeList != null && routeList.isNotEmpty) {
-          print('총 경로 개수: ${routeList.length}');
-          for (var route in routeList) {
-            print(
-              '${route.option.displayName}: ${route.pathPoints.length}개 좌표, ${route.distanceKm}km, ${route.durationMin}분',
-            );
-          }
+  void _findRoute() {
+    final notifier = ref.read(routeViewmodelProvider.notifier);
+    notifier.searchRoute().then((_) {
+      // 성공 시 화면 이동
+      final state = ref.read(routeViewmodelProvider);
+      state.whenData((routeState) {
+        if (routeState.routes.isNotEmpty && mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RouteScreen()),
+          );
         }
       });
-
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const RouteScreen()),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('경로를 찾을 수 없습니다: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final routeState = ref.watch(routeViewmodelProvider);
-    final isLoading = routeState.isLoading;
+    final routeStateAsync = ref.watch(routeViewmodelProvider);
+    final notifier = ref.read(routeViewmodelProvider.notifier);
+    final isLoading = routeStateAsync.isLoading;
+
+    // 에러 발생 시 스낵바
+    routeStateAsync.whenOrNull(
+      error: (error, _) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('경로를 찾을 수 없습니다: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
+      },
+    );
 
     // TextController를 ViewModel 상태와 동기화
-    final selectedPlaces = ref.watch(placeSelectViewmodelProvider);
-    _startController.text = selectedPlaces.start != null
-        ? selectedPlaces.start!.placeName
-        : '';
-    _endController.text = selectedPlaces.end != null
-        ? selectedPlaces.end!.placeName
-        : '';
+    routeStateAsync.whenData((routeState) {
+      _startController.text = routeState.start != null
+          ? routeState.start!.placeName
+          : '';
+      _endController.text = routeState.end != null
+          ? routeState.end!.placeName
+          : '';
+    });
 
     return Container(
       height: 200,
@@ -259,10 +252,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
             width: double.infinity,
             height: 56,
             decoration: ShapeDecoration(
-              gradient:
-                  (selectedPlaces.start != null &&
-                      selectedPlaces.end != null &&
-                      !isLoading)
+              gradient: notifier.canSearchRoutes()
                   ? LinearGradient(
                       begin: Alignment(1.00, 0.50),
                       end: Alignment(0.00, 0.50),
@@ -272,10 +262,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
                       ],
                     )
                   : null,
-              color:
-                  (selectedPlaces.start != null &&
-                      selectedPlaces.end != null &&
-                      !isLoading)
+              color: notifier.canSearchRoutes()
                   ? null
                   : const Color(0xFFE5E7EB),
               shape: RoundedRectangleBorder(
@@ -286,12 +273,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
               color: Colors.transparent,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
-                onTap:
-                    (selectedPlaces.start != null &&
-                        selectedPlaces.end != null &&
-                        !isLoading)
-                    ? _findRoute
-                    : null,
+                onTap: notifier.canSearchRoutes() ? _findRoute : null,
                 child: Center(
                   child: isLoading
                       ? SizedBox(
@@ -308,10 +290,7 @@ class _RouteFormState extends ConsumerState<RouteForm> {
                           '길찾기',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color:
-                                (selectedPlaces.start != null &&
-                                    selectedPlaces.end != null &&
-                                    !isLoading)
+                            color: notifier.canSearchRoutes()
                                 ? Colors.white
                                 : const Color(0xFF9CA3AF),
                             fontSize: 18,

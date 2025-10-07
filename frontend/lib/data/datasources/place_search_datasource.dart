@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'place_search_datasource.g.dart';
 
-@Riverpod(keepAlive: true)
+@riverpod
 PlaceSearchDatasource placeSearchDatasource(Ref ref) {
   return PlaceSearchDatasource(ref.watch(kakaoLocalDatasourceProvider));
 }
@@ -15,13 +15,11 @@ class PlaceSearchDatasource {
 
   PlaceSearchDatasource(this.kakaoLocalDatasource);
 
-  Future<PlaceSearchResponse> searchPlaces(String query) async {
+  Future<PlaceSearchModel> fetchPlaces(String query) async {
     try {
-      return await kakaoLocalDatasource.searchPlacesFromQuery(query: query);
+      return await kakaoLocalDatasource.fetchPlacesFromQuery(query: query);
     } catch (e) {
-      print('API 오류로 빈 결과 반환: $e');
-      // API 오류시 빈 결과 반환
-      return const PlaceSearchResponse(documents: []);
+      rethrow;
     }
   }
 }

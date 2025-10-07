@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:frontend/presentation/viewmodels/place_select_viewmodel.dart';
+import 'package:frontend/presentation/viewmodels/route_viewmodel.dart';
 
 class RouteTopBar extends ConsumerWidget {
   const RouteTopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final places = ref.watch(placeSelectViewmodelProvider);
-    final startPlace = places.start;
-    final endPlace = places.end;
+    final routeStateAsync = ref.watch(routeViewmodelProvider);
 
     return Positioned(
       top: 70,
@@ -50,48 +48,80 @@ class RouteTopBar extends ConsumerWidget {
                 ),
               ],
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Text(
-                    startPlace?.placeName ?? '출발지',
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: const Color(0xFF374151),
-                      fontSize: 18,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
-                      height: 1.29,
+            child: routeStateAsync.when(
+              data: (routeState) => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      routeState.start?.placeName ?? '출발지',
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: const Color(0xFF374151),
+                        fontSize: 18,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
+                        height: 1.29,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 10),
-                  child: SvgPicture.asset(
-                    'assets/icons/arrow.svg',
-                    width: 16,
-                    height: 16,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    endPlace?.placeName ?? '도착지',
-                    textAlign: TextAlign.center,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(
-                      color: const Color(0xFF374151),
-                      fontSize: 18,
-                      fontFamily: 'Pretendard',
-                      fontWeight: FontWeight.w500,
-                      height: 1.29,
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgPicture.asset(
+                      'assets/icons/arrow.svg',
+                      width: 16,
+                      height: 16,
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: Text(
+                      routeState.end?.placeName ?? '도착지',
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: const Color(0xFF374151),
+                        fontSize: 18,
+                        fontFamily: 'Pretendard',
+                        fontWeight: FontWeight.w500,
+                        height: 1.29,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              loading: () => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(child: Text('출발지', textAlign: TextAlign.center)),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgPicture.asset(
+                      'assets/icons/arrow.svg',
+                      width: 16,
+                      height: 16,
+                    ),
+                  ),
+                  Expanded(child: Text('도착지', textAlign: TextAlign.center)),
+                ],
+              ),
+              error: (_, __) => Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(child: Text('출발지', textAlign: TextAlign.center)),
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 10),
+                    child: SvgPicture.asset(
+                      'assets/icons/arrow.svg',
+                      width: 16,
+                      height: 16,
+                    ),
+                  ),
+                  Expanded(child: Text('도착지', textAlign: TextAlign.center)),
+                ],
+              ),
             ),
           ),
         ],

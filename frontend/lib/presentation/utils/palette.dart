@@ -1,5 +1,5 @@
 import 'package:flutter/painting.dart';
-import 'package:frontend/data/models/route_model.dart';
+import 'package:frontend/domain/enums/route_option.dart';
 
 class Palette {
   static const Color primaryAccentColor = Color(0xFFFF5930);
